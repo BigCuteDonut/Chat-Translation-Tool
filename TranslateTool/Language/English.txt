@@ -1,0 +1,31 @@
+0: Move;;
+1: Translate;;
+2: Reading from {0}.;;
+3: No command called "{0}".;;
+4: Translation:
+ {0};;
+5: Error: Translation request timed out.;;
+6: Error: Translation Failed.;;
+7: Message translated to {0}.;;
+8: Help:
+The interface consists of:
+"Output": Contains translated and non-translated chat messages and other system information.
+"Input": You may type messages here, activated by pressing keyboard Enter while the input is active. If the message starts with "/", it will be taken as a command, otherwise it will be translated, and the result will be copied automatically.
+
+Commands:
+"/from <message>": This will translate a message from Japanese to English.
+"/jp": This will switch the program to Japanese user mode(WIP).
+"/search <words>": Search the Japanese word database for words based on their English meaning.
+"/engine <id>": Placeholder.
+"/help": Shows this message.
+
+Please note this program is currently in alpha.;;
+9: This command is not yet implemented.;;
+10: ;;
+11: ;;
+12: Indicates the state of Clickthrough Mode. Press Ctrl+T to toggle it.;;
+13: Auto Scroll;;
+14: Auto Show;;
+15: Close;;
+16: Show addition info when translating input.;;
+17: Prevent window from becoming transparent.;;
