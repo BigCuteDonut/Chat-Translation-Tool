@@ -26,7 +26,7 @@ namespace TranslateTool
 {
     public partial class Form1 : Form
     {
-        public const string VersionNumber = "1.0.0rc2";
+        public const string VersionNumber = "1.0.0";
         public static Form1 Form;
         public static Language Language;
 
