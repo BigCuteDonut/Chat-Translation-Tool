@@ -18,8 +18,7 @@ Commands:
 "/search <words>": Search the Japanese word database for words based on their English meaning.
 "/engine <id>": Placeholder.
 "/help": Shows this message.
-
-Please note this program is currently in alpha.;;
+;;
 9: This command is not yet implemented.;;
 10: ;;
 11: ;;
