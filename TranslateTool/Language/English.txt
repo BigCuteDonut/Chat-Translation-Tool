@@ -29,3 +29,4 @@ Please note this program is currently in alpha.;;
 15: Close;;
 16: Show addition info when translating input.;;
 17: Prevent window from becoming transparent.;;
+18: The translator has no additional translation suggestions.;;

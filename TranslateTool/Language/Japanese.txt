@@ -27,3 +27,4 @@
 15: 閉じる;;
 16: 日本語インターフェースには適用されません。;;
 17: ウィンドウの透明化を防止します。;;
+18: The translator has no additional translation suggestions.;;

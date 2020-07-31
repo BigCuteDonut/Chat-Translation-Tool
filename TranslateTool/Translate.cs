@@ -217,7 +217,7 @@ namespace TranslateTool
         private static Hinter hinter;
         private static int instanceCount = 4;
         private static Regex commandRegex;
-
+        private static int retryCount = 0;
         public static Language Language;
         public static string Input;
 
@@ -280,21 +280,16 @@ namespace TranslateTool
         {
             var browsers = new Browser[instanceCount];
 
+            Language = Form1.Language;
             translateFromBrowsers = new Stack<Browser>(4);
             translateToBrowser = new Browser();
-            translateToBrowser.OpenUrl("https://www.deepl.com/translator");
+            translateToBrowser.AsyncOpenUrl("https://www.deepl.com/translator");
             for (var i = 0; i < instanceCount; i++)
             {
                 browsers[i] = new Browser();
                 translateFromBrowsers.Push(browsers[i]);
-                browsers[i].OpenUrl("https://www.deepl.com/translator");
+                browsers[i].AsyncOpenUrl("https://www.deepl.com/translator");
             }
-            translateToBrowser.PageInitialize();
-            for (var i = 0; i < instanceCount; i++)
-            {
-                browsers[i].PageInitialize();
-            }
-            Language = Form1.Language;
             thread = new Thread(new ThreadStart(_CloseWatch));
             browserThread = new Thread(new ThreadStart(BrowserThread));
             thread.Start();
@@ -403,10 +398,15 @@ namespace TranslateTool
                                 Form1.Form.SetInputValue($"");
                             }
                         }
+                        else if (Input.Trim(' ').ToLower() == "/re")
+                        {
+                            RetryTranslateTo();
+                            Form1.Form.SetInputValue("");
+                        }
                         else if (Input.Trim(' ').ToLower() == "/help")
                         {
                             Form1.Form.WriteLine(Language.Text[8]);
-                            Form1.Form.SetInputValue($"");
+                            Form1.Form.SetInputValue("");
                         }
                         else
                         {
@@ -581,28 +581,30 @@ namespace TranslateTool
             {
                 var (completionSource, targetBrowser, textValue) = ((TaskCompletionSource<string>, Browser, string))state;
 
-                targetBrowser.OpenUrl(url + Uri.EscapeDataString(textValue.Replace("/", "\u2215")));
-                targetBrowser.PageInitialize();
-                while (true)
+                if (targetBrowser.AsyncOpenUrl(url + Uri.EscapeDataString(textValue.Replace("/", "\u2215"))).GetAwaiter().GetResult())
                 {
-                    var result = targetBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__inner_textarea_container > textarea\").value").GetAwaiter().GetResult().Result.ToString();
-                    var timeout = 8000;
-
-                    if (result == "")
+                    targetBrowser.PageInitialize();
+                    while (true)
                     {
-                        Thread.Sleep(50);
-                        timeout -= 50;
+                        var result = targetBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__inner_textarea_container > textarea\").value").GetAwaiter().GetResult().Result.ToString();
+                        var timeout = 8000;
 
-                        if (timeout <= 0)
+                        if (result == "")
                         {
-                            taskCompletion.SetResult(result);
+                            Thread.Sleep(50);
+                            timeout -= 50;
+
+                            if (timeout <= 0)
+                            {
+                                taskCompletion.SetResult(result);
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            completionSource.SetResult(result);
                             break;
                         }
-                    }
-                    else
-                    {
-                        completionSource.SetResult(result);
-                        break;
                     }
                 }
             }, (taskCompletion, browser, text));
@@ -689,6 +691,7 @@ namespace TranslateTool
 
             package.Text = result;
             package.Type = PackageTypes.TranslatedInput;
+            retryCount = 0;
 
             var confirmResult = await TranslateFrom(result);
             var confirmPackage = data.Add();
@@ -815,6 +818,51 @@ namespace TranslateTool
             catch (Exception e)
             {
                 return e.ToString();
+            }
+        }
+
+        public static async void RetryTranslateTo()
+        {
+            object alternative = null;
+
+            if (retryCount == 0)
+            {
+                alternative = translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(3) > button.lmt__translations_as_text__text_btn\").innerText").GetAwaiter().GetResult().Result;
+            }
+            else if (retryCount == 1)
+            {
+                alternative = translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(4) > button.lmt__translations_as_text__text_btn\").innerText").GetAwaiter().GetResult().Result;
+            }
+            else if (retryCount == 2)
+            {
+                alternative = translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(5) > button.lmt__translations_as_text__text_btn\").innerText").GetAwaiter().GetResult().Result;
+            }
+            if (alternative == null)
+            {
+                Form1.Form.WriteLine(Language.Text[18]);
+            }
+            else
+            {
+                var result = alternative.ToString();
+                var translationPackage = data.Add();
+
+                translationPackage.Text = result;
+                translationPackage.Type = PackageTypes.TranslatedInput;
+
+                var confirmResult = await TranslateFrom(result);
+                var confirmPackage = data.Add();
+
+                confirmPackage.Text = confirmResult;
+                confirmPackage.Type = PackageTypes.TranslatedInputConfirmation;
+                retryCount++;
+
+                if (inputInfoEnabled)
+                {
+                    var hintPackage = data.Add();
+
+                    hintPackage.Text = hinter.AddHinting(result);
+                    hintPackage.Type = PackageTypes.TranslatedInputHint;
+                }
             }
         }
 

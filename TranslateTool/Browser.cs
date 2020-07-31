@@ -20,6 +20,7 @@ using CefSharp.OffScreen;
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TranslateTool
 {
@@ -27,7 +28,18 @@ namespace TranslateTool
     public class Browser
     {
         private static CefSettings settings;
-        public ChromiumWebBrowser Page { get; private set; }
+        public ChromiumWebBrowser page;
+        public ChromiumWebBrowser Page
+        {
+            get
+            {
+                if(!page.IsBrowserInitialized)
+                {
+                    PageInitialize();
+                }
+                return page;
+            }
+        }
         public RequestContext RequestContext { get; private set; }
         private ManualResetEvent manualResetEvent = new ManualResetEvent(false);
 
@@ -46,32 +58,42 @@ namespace TranslateTool
         public Browser()
         {
             RequestContext = new RequestContext();
-            Page = new ChromiumWebBrowser("", null, RequestContext);
+            page = new ChromiumWebBrowser("", null, RequestContext);
             PageInitialize();
         }
 
-        public void OpenUrl(string url)
+        public async Task<bool> AsyncOpenUrl(string url)
         {
-            try
+            var taskCompletion = new TaskCompletionSource<bool>();
+
+            ThreadPool.QueueUserWorkItem((state) =>
             {
-                Page.LoadingStateChanged += PageLoadingStateChanged;
-                if (Page.IsBrowserInitialized)
+                try
                 {
-                    Page.Load(url);
+                    page.LoadingStateChanged += PageLoadingStateChanged;
 
-                    bool isSignalled = manualResetEvent.WaitOne(TimeSpan.FromSeconds(60));
-                    manualResetEvent.Reset();
-
-                    if (!isSignalled)
+                    if (page.IsBrowserInitialized)
                     {
-                        Page.Stop();
+                        page.Load(url);
+
+                        bool isSignalled = manualResetEvent.WaitOne(TimeSpan.FromSeconds(60));
+                        manualResetEvent.Reset();
+
+                        if (!isSignalled)
+                        {
+                            page.Stop();
+                        }
                     }
+                    taskCompletion.SetResult(true);
                 }
-            }
-            catch (ObjectDisposedException)
-            {
-            }
-            Page.LoadingStateChanged -= PageLoadingStateChanged;
+                catch (ObjectDisposedException)
+                {
+                    taskCompletion.SetResult(false);
+                }
+                page.LoadingStateChanged -= PageLoadingStateChanged;
+            });
+
+            return await taskCompletion.Task;
         }
 
         private void PageLoadingStateChanged(object sender, LoadingStateChangedEventArgs e)
@@ -84,7 +106,7 @@ namespace TranslateTool
 
         public void PageInitialize()
         {
-            SpinWait.SpinUntil(() => Page.IsBrowserInitialized);
+            SpinWait.SpinUntil(() => page.IsBrowserInitialized);
         }
     }
 }

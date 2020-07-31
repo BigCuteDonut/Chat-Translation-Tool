@@ -25,7 +25,7 @@ namespace TranslateTool
     public class Language
     {
         public readonly bool IsJapanese;
-        public string[] Text { get; private set; } = new string[18];
+        public string[] Text { get; private set; } = new string[32];
 
         //Probably should redesign the layout of the language file, it's kinda dumb.
         public Language(string languageCode, string version)
