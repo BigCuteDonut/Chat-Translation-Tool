@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -29,175 +28,6 @@ using System.Windows.Forms;
 
 namespace TranslateTool
 {
-    public struct PackageTypes
-    {
-        public const short Finished = -1;
-        public const short NoType = 0;
-        public const short TranslateInputTo = 1;
-        public const short TranslateInputFrom = 2;
-        public const short TranslateChat = 3;
-        public const short MoveBrowser = 11;
-        public const short TranslatedChat = 100;
-        public const short TranslatedInput = 101;
-        public const short TranslatedInputConfirmation = 102;
-        public const short HinterTranslation = 104;
-        public const short HinterMeaning = 105;
-        public const short TranslatedInputHint = 106;
-    }
-
-    public unsafe class DataPackage
-    {
-        public const int TextSize = 1400;
-        public const int NameSize = 60;
-        public const int SizeOf = 20 + TextSize + NameSize;
-        public const int TypeOffset = 0;
-        public const int AgeOffset = 2;
-        public const int TextByteLengthOffset = 4;
-        public const int NameByteLengthOffset = 8;
-        public const int NameOffset = 12;
-        public const int TextOffset = NameOffset + NameSize;
-
-        public IntPtr Pointer;
-
-        public DataPackage(IntPtr pointer)
-        {
-            Pointer = pointer;
-            Type = -1;
-            Age = 0;
-            TextByteLength = 0;
-        }
-
-        public short Type
-        {
-            get => (sbyte)Marshal.ReadInt16(Pointer, TypeOffset);
-            set => Marshal.WriteInt16(Pointer, TypeOffset, value);
-        }
-        public short Age
-        {
-            get => Marshal.ReadInt16(Pointer, AgeOffset);
-            set => Marshal.WriteInt16(Pointer, AgeOffset, value);
-        }
-        public int TextByteLength
-        {
-            get => Marshal.ReadInt32(Pointer, TextByteLengthOffset);
-            set => Marshal.WriteInt32(Pointer, TextByteLengthOffset, value);
-        }
-        public int NameByteLength
-        {
-            get => Marshal.ReadInt32(Pointer, NameByteLengthOffset);
-            set => Marshal.WriteInt32(Pointer, NameByteLengthOffset, value);
-        }
-        public string Name
-        {
-            get => Encoding.UTF8.GetString((byte*)Pointer + NameOffset, NameByteLength);
-            set
-            {
-                var bytes = Encoding.UTF8.GetBytes(value);
-
-                if (bytes.Length > NameSize)
-                {
-                    bytes = (byte[])bytes.Take(NameSize);
-                }
-                NameByteLength = bytes.Length;
-                Marshal.Copy(bytes, 0, Pointer + NameOffset, bytes.Length);
-            }
-        }
-        public string Text
-        {
-            get => Encoding.UTF8.GetString((byte*)Pointer + TextOffset, TextByteLength);
-            set
-            {
-                var bytes = Encoding.UTF8.GetBytes(value);
-
-                if (bytes.Length > TextSize)
-                {
-                    bytes = (byte[])bytes.Take(TextSize);
-                }
-                TextByteLength = bytes.Length;
-                Marshal.Copy(bytes, 0, Pointer + TextOffset, bytes.Length);
-            }
-        }
-        public void Clear()
-        {
-            Type = PackageTypes.Finished;
-        }
-    }
-    public class Data
-    {
-        public const int PackageMax = 50;
-
-        public IntPtr View;
-        public DataPackage[] Packages;
-
-        public Data(IntPtr view)
-        {
-            View = view;
-            Packages = new DataPackage[Data.PackageMax];
-            for (var i = 0; i < PackageMax; i++)
-            {
-                Packages[i] = new DataPackage(View + (i * DataPackage.SizeOf));
-            }
-        }
-        public DataPackage this[int index]
-        {
-            get => Packages[index];
-        }
-        public void Foreach(Action<DataPackage> action)
-        {
-            for (int i = 0, l = PackageMax; i < l; i++)
-            {
-                action(Packages[i]);
-            }
-        }
-        public DataPackage Add()
-        {
-            DataPackage result = null;
-            DataPackage oldestPackage = null;
-            var oldestAge = 0;
-
-            Foreach((package) =>
-            {
-                if (package.Type == PackageTypes.Finished)
-                {
-                    if (result == null)
-                    {
-                        package.Age = 0;
-                        package.Type = 0;
-                        result = package;
-                    }
-                }
-                package.Age++;
-
-                if (package.Age > oldestAge)
-                {
-                    oldestAge = package.Age;
-                    oldestPackage = package;
-                }
-            });
-            if (result == null)
-            {
-                oldestPackage.Age = 0;
-                oldestPackage.Type = 0;
-
-                return oldestPackage;
-            }
-
-            return result;
-        }
-        public DataPackage FindType(short type)
-        {
-            for (var i = 0; i < Data.PackageMax; i++)
-            {
-                var package = Packages[i];
-
-                if (package.Type == type)
-                {
-                    return package;
-                }
-            }
-            return null;
-        }
-    }
     public static class Translate
     {
         private static string fileName;
@@ -232,8 +62,7 @@ namespace TranslateTool
         {
 
             commandRegex = new Regex("/(?:(?:a|p|t)|(?:(?:cmf|camouflage) \\S+)|(?:(?:la|cla|mla|fla) \\S+)|(?:ce\\d)|(?:ceall)|(?:ceall (?:(?:on)|(?:off)))|(?:ci\\d \\d)|(?:ci\\d+)|(?:face\\d (?:(?:on)|(?:off)))|(?:face\\d)|(?:fc\\d (?:(?:on)|(?:off)))|(?:fc\\d)|(?:mn\\d+)|(?:mpal\\d)|(?:moya)|(?:spal\\d+)|(?:toge)|(?:symbol\\d+)|(?:vo\\d+)|(?:mf\\d+)|(?:sr\\d+))");
-            view = (byte*)Marshal.AllocHGlobal(DataPackage.SizeOf * (Data.PackageMax + 1));
-            data = new Data((IntPtr)view);
+            data = new Data();
             fileName = "";
         }
 
@@ -517,10 +346,8 @@ namespace TranslateTool
                 }
                 HandleInputCommand();
 
-                for (var i = 0; i < Data.PackageMax; i++)
+                foreach(var package in data.Packages)
                 {
-                    var package = data.Packages[i];
-
                     HandlePackage(package);
                 }
                 Thread.Sleep(50);
@@ -531,10 +358,8 @@ namespace TranslateTool
         {
             while (!closeWatchStop)
             {
-                for (var i = 0; i < Data.PackageMax; i++)
+                foreach(var package in data.Packages.ToArray())
                 {
-                    var package = data.Packages[i];
-
                     HandleBrowserPackage(package);
                 }
                 Thread.Sleep(50);
@@ -665,7 +490,7 @@ namespace TranslateTool
 
         private static async void ProcessTranslateChat(DataPackage package)
         {
-            package.Type = PackageTypes.NoType;
+            package.Type = PackageTypes.Operating;
 
             var result = await TranslateFrom(package.Text);
 
@@ -675,7 +500,7 @@ namespace TranslateTool
 
         private static async void ProcessTranslateInputFrom(DataPackage package)
         {
-            package.Type = PackageTypes.NoType;
+            package.Type = PackageTypes.Operating;
 
             var result = await TranslateFrom(package.Text);
 
@@ -685,7 +510,7 @@ namespace TranslateTool
 
         private static async void ProcessTranslateInputTo(DataPackage package)
         {
-            package.Type = PackageTypes.NoType;
+            package.Type = PackageTypes.Operating;
 
             var result = await TranslateTo(package.Text);
 
@@ -694,14 +519,14 @@ namespace TranslateTool
             retryCount = 0;
 
             var confirmResult = await TranslateFrom(result);
-            var confirmPackage = data.Add();
+            var confirmPackage = data.AddPackage();
 
             confirmPackage.Text = confirmResult;
             confirmPackage.Type = PackageTypes.TranslatedInputConfirmation;
 
             if (inputInfoEnabled)
             {
-                var hintPackage = data.Add();
+                var hintPackage = data.AddPackage();
 
                 hintPackage.Text = hinter.AddHinting(result);
                 hintPackage.Type = PackageTypes.TranslatedInputHint;
@@ -731,11 +556,12 @@ namespace TranslateTool
             }
         }
 
+        //Idea: Could include previous messages to translate to give the translator more context. \n{infuo}\n seems to be a marker that survives translation. It could be used as a separator.
         public static void TranslateChat(string name, string text)
         {
-            var data = Translate.data.Add();
+            var data = Translate.data.AddPackage();
 
-            data.Text = text;
+            data.SetTextLimited(text);
             data.Name = name;
             data.Type = PackageTypes.TranslateChat;
         }
@@ -748,7 +574,7 @@ namespace TranslateTool
 
         public static void TranslateInputTo(string text)
         {
-            var data = Translate.data.Add();
+            var data = Translate.data.AddPackage();
 
             data.Type = PackageTypes.TranslateInputTo;
             data.Text = text;
@@ -784,7 +610,7 @@ namespace TranslateTool
 
         public static void TranslateInputFrom(string text)
         {
-            var data = Translate.data.Add();
+            var data = Translate.data.AddPackage();
 
             data.Type = PackageTypes.TranslateInputFrom;
             data.Text = text;
@@ -844,13 +670,13 @@ namespace TranslateTool
             else
             {
                 var result = alternative.ToString();
-                var translationPackage = data.Add();
+                var translationPackage = data.AddPackage();
 
                 translationPackage.Text = result;
                 translationPackage.Type = PackageTypes.TranslatedInput;
 
                 var confirmResult = await TranslateFrom(result);
-                var confirmPackage = data.Add();
+                var confirmPackage = data.AddPackage();
 
                 confirmPackage.Text = confirmResult;
                 confirmPackage.Type = PackageTypes.TranslatedInputConfirmation;
@@ -858,7 +684,7 @@ namespace TranslateTool
 
                 if (inputInfoEnabled)
                 {
-                    var hintPackage = data.Add();
+                    var hintPackage = data.AddPackage();
 
                     hintPackage.Text = hinter.AddHinting(result);
                     hintPackage.Type = PackageTypes.TranslatedInputHint;
