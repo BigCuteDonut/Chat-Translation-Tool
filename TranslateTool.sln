@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatTranslator", "ChatTranslator\ChatTranslator.csproj", "{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,18 @@ Global
 		{791A0754-B6E9-4F1D-85D5-46C3AF89A185}.Release|x64.Build.0 = Release|x64
 		{791A0754-B6E9-4F1D-85D5-46C3AF89A185}.Release|x86.ActiveCfg = Release|x86
 		{791A0754-B6E9-4F1D-85D5-46C3AF89A185}.Release|x86.Build.0 = Release|x86
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Debug|x64.ActiveCfg = Debug|x64
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Debug|x64.Build.0 = Debug|x64
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Debug|x86.Build.0 = Debug|Any CPU
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Release|x64.ActiveCfg = Release|x64
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Release|x64.Build.0 = Release|x64
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Release|x86.ActiveCfg = Release|Any CPU
+		{12EEE539-EF21-4085-BC88-DE66ACB8C0D6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

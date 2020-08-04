@@ -20,11 +20,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace TranslateTool
 {
@@ -48,6 +48,7 @@ namespace TranslateTool
         private static int instanceCount = 4;
         private static Regex commandRegex;
         private static int retryCount = 0;
+        private static MainWindowLogic mainWindow;
         public static Language Language;
         public static string Input;
 
@@ -60,7 +61,6 @@ namespace TranslateTool
 
         unsafe static Translate()
         {
-
             commandRegex = new Regex("/(?:(?:a|p|t)|(?:(?:cmf|camouflage) \\S+)|(?:(?:la|cla|mla|fla) \\S+)|(?:ce\\d)|(?:ceall)|(?:ceall (?:(?:on)|(?:off)))|(?:ci\\d \\d)|(?:ci\\d+)|(?:face\\d (?:(?:on)|(?:off)))|(?:face\\d)|(?:fc\\d (?:(?:on)|(?:off)))|(?:fc\\d)|(?:mn\\d+)|(?:mpal\\d)|(?:moya)|(?:spal\\d+)|(?:toge)|(?:symbol\\d+)|(?:vo\\d+)|(?:mf\\d+)|(?:sr\\d+))");
             data = new Data();
             fileName = "";
@@ -95,7 +95,7 @@ namespace TranslateTool
                         file = null;
                     }
                     file = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    Form1.Form.WriteLine(string.Format(Language.Text[2], fileName));
+                    mainWindow.WriteLine(string.Format(Language.Text[2], fileName));
                     file.Position = lastFileLength;
 
                     return true;
@@ -105,11 +105,12 @@ namespace TranslateTool
             return false;
         }
 
-        public static void Start()
+        public static void Start(MainWindowLogic mainWindow)
         {
             var browsers = new Browser[instanceCount];
 
-            Language = Form1.Language;
+            Translate.mainWindow = mainWindow;
+            Language = MainWindowLogic.Language;
             translateFromBrowsers = new Stack<Browser>(4);
             translateToBrowser = new Browser();
             translateToBrowser.AsyncOpenUrl("https://www.deepl.com/translator");
@@ -186,7 +187,7 @@ namespace TranslateTool
             }
             if (!translated)
             {
-                Form1.Form.WriteLine($"{name}:\r\n  {message}");
+                mainWindow.WriteLine($"{name}:\r\n  {message}");
 
             }
         }
@@ -200,7 +201,7 @@ namespace TranslateTool
                     if (Input[0] != '/')
                     {
                         TranslateInputTo(Input);
-                        Form1.Form.SetInputValue("");
+                        mainWindow.SetInputValue("");
                         Input = null;
                     }
                     else
@@ -209,33 +210,33 @@ namespace TranslateTool
                         {
                             if (!Language.IsJapanese)
                             {
-                                var language = new Language("ja", Form1.VersionNumber);
+                                var language = new Language("ja", MainWindowLogic.VersionNumber);
 
                                 Language = language;
-                                Form1.Form.ApplyTranslation(language);
-                                Form1.Form.SetInputValue($"");
+                                mainWindow.ApplyTranslation(language);
+                                mainWindow.SetInputValue($"");
                             }
                         }
                         else if (Input.Trim(' ').ToLower() == "/en")
                         {
                             if (Language.IsJapanese)
                             {
-                                var language = new Language("en", Form1.VersionNumber);
+                                var language = new Language("en", MainWindowLogic.VersionNumber);
 
                                 Language = language;
-                                Form1.Form.ApplyTranslation(language);
-                                Form1.Form.SetInputValue($"");
+                                mainWindow.ApplyTranslation(language);
+                                mainWindow.SetInputValue($"");
                             }
                         }
                         else if (Input.Trim(' ').ToLower() == "/re")
                         {
                             RetryTranslateTo();
-                            Form1.Form.SetInputValue("");
+                            mainWindow.SetInputValue("");
                         }
                         else if (Input.Trim(' ').ToLower() == "/help")
                         {
-                            Form1.Form.WriteLine(Language.Text[8]);
-                            Form1.Form.SetInputValue("");
+                            mainWindow.WriteLine(Language.Text[8]);
+                            mainWindow.SetInputValue("");
                         }
                         else
                         {
@@ -247,7 +248,7 @@ namespace TranslateTool
                                 if (command == "/from ")
                                 {
                                     TranslateInputFrom(Input.TrimStart(' ').Substring(6));
-                                    Form1.Form.SetInputValue($"");
+                                    mainWindow.SetInputValue($"");
                                 }
                                 else if (Input.Length > 8)
                                 {
@@ -255,20 +256,20 @@ namespace TranslateTool
 
                                     if (command == "/search ")
                                     {
-                                        Form1.Form.WriteLine(HinterSearch(Input.TrimStart(' ').Substring(8)));
-                                        Form1.Form.SetInputValue($"");
+                                        mainWindow.WriteLine(HinterSearch(Input.TrimStart(' ').Substring(8)));
+                                        mainWindow.SetInputValue($"");
                                     }
                                     else if (command == "/engine ")
                                     {
-                                        Form1.Form.WriteLine(Language.Text[9]);
-                                        Form1.Form.SetInputValue($"");
+                                        mainWindow.WriteLine(Language.Text[9]);
+                                        mainWindow.SetInputValue($"");
                                     }
                                 }
                             }
                             else
                             {
-                                Form1.Form.WriteLine(string.Format(Language.Text[3], Input));
-                                Form1.Form.SetInputValue($"");
+                                mainWindow.WriteLine(string.Format(Language.Text[3], Input));
+                                mainWindow.SetInputValue($"");
                             }
                         }
                         Input = null;
@@ -568,7 +569,7 @@ namespace TranslateTool
 
         public static void ProcessTranslatedChat(DataPackage package)
         {
-            Form1.Form.WriteLine($"{package.Name}:\r\n{package.Text}");
+            mainWindow.WriteLine($"{package.Name}:\r\n{package.Text}");
             package.Clear();
         }
 
@@ -583,28 +584,28 @@ namespace TranslateTool
         public static void ProcessTranslatedInput(DataPackage package)
         {
             var text = package.Text;
-            var action = new Action(() => Clipboard.SetText(text));
+            var action = new Action(() => System.Windows.Clipboard.SetText(text));
 
-            Form1.Form.Invoke(action);
-            Form1.Form.WriteLine(string.Format(Language.Text[7], text));
+            mainWindow.Invoke(action);
+            mainWindow.WriteLine(string.Format(Language.Text[7], text));
             package.Clear();
         }
 
         public static void ProcessHinterMeaning(DataPackage package)
         {
-            Form1.Form.WriteLine($"({package.Text})");
+            mainWindow.WriteLine($"({package.Text})");
             package.Clear();
         }
 
         public static void ProcessTranslatedInputHint(DataPackage package)
         {
-            Form1.Form.WriteLine($"Info:{package.Text}");
+            mainWindow.WriteLine($"Info:{package.Text}");
             package.Clear();
         }
 
         public static void ProcessTranslatedInputConfirmation(DataPackage package)
         {
-            Form1.Form.WriteLine($"({package.Text})");
+            mainWindow.WriteLine($"({package.Text})");
             package.Clear();
         }
 
@@ -665,7 +666,7 @@ namespace TranslateTool
             }
             if (alternative == null)
             {
-                Form1.Form.WriteLine(Language.Text[18]);
+                mainWindow.WriteLine(Language.Text[18]);
             }
             else
             {
