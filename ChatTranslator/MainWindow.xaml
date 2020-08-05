@@ -46,22 +46,22 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsPressed" Value="True">
-                                                <Setter Property="Background" TargetName="border" Value="#FF10243A"/>
-                                                <Setter Property="BorderBrush" TargetName="border" Value="#FF10243A"/>
+                                                <Setter Property="Background" TargetName="border" Value="#19000000"/>
+                                                <Setter Property="BorderBrush" TargetName="border" Value="#19000000"/>
                                             </Trigger>
                                             <Trigger Property="IsEnabled" Value="False">
                                                 <Setter Property="Opacity" TargetName="contentPresenter" Value="0.56"/>
-                                                <Setter Property="Background" TargetName="border" Value="#FF10243A"/>
-                                                <Setter Property="BorderBrush" TargetName="border" Value="#FF10243A"/>
+                                                <Setter Property="Background" TargetName="border" Value="#19000000"/>
+                                                <Setter Property="BorderBrush" TargetName="border" Value="#19000000"/>
                                             </Trigger>
                                             <Trigger Property="IsPressed" Value="False">
-                                                <Setter Property="Background" TargetName="border" Value="#FF10243A"/>
-                                                <Setter Property="BorderBrush" TargetName="border" Value="#FF10243A"/>
+                                                <Setter Property="Background" TargetName="border" Value="#19000000"/>
+                                                <Setter Property="BorderBrush" TargetName="border" Value="#19000000"/>
                                             </Trigger>
                                             <Trigger Property="IsEnabled" Value="True">
                                                 <Setter Property="Opacity" TargetName="contentPresenter" Value="0.56"/>
-                                                <Setter Property="Background" TargetName="border" Value="#FF10243A"/>
-                                                <Setter Property="BorderBrush" TargetName="border" Value="#FF10243A"/>
+                                                <Setter Property="Background" TargetName="border" Value="#19000000"/>
+                                                <Setter Property="BorderBrush" TargetName="border" Value="#19000000"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -177,22 +177,22 @@
                                         <ControlTemplate.Triggers>
 
                                             <Trigger Property="IsPressed" Value="True">
-                                                <Setter Property="Background" TargetName="border" Value="#FF10243A"/>
-                                                <Setter Property="BorderBrush" TargetName="border" Value="#FF10243A"/>
+                                                <Setter Property="Background" TargetName="border" Value="#19000000"/>
+                                                <Setter Property="BorderBrush" TargetName="border" Value="#19000000"/>
                                             </Trigger>
                                             <Trigger Property="IsEnabled" Value="False">
                                                 <Setter Property="Opacity" TargetName="contentPresenter" Value="0.56"/>
-                                                <Setter Property="Background" TargetName="border" Value="#FF10243A"/>
-                                                <Setter Property="BorderBrush" TargetName="border" Value="#FF10243A"/>
+                                                <Setter Property="Background" TargetName="border" Value="#19000000"/>
+                                                <Setter Property="BorderBrush" TargetName="border" Value="#19000000"/>
                                             </Trigger>
                                             <Trigger Property="IsPressed" Value="False">
-                                                <Setter Property="Background" TargetName="border" Value="#FF10243A"/>
-                                                <Setter Property="BorderBrush" TargetName="border" Value="#FF10243A"/>
+                                                <Setter Property="Background" TargetName="border" Value="#19000000"/>
+                                                <Setter Property="BorderBrush" TargetName="border" Value="#19000000"/>
                                             </Trigger>
                                             <Trigger Property="IsEnabled" Value="True">
                                                 <Setter Property="Opacity" TargetName="contentPresenter" Value="0.56"/>
-                                                <Setter Property="Background" TargetName="border" Value="#FF10243A"/>
-                                                <Setter Property="BorderBrush" TargetName="border" Value="#FF10243A"/>
+                                                <Setter Property="Background" TargetName="border" Value="#19000000"/>
+                                                <Setter Property="BorderBrush" TargetName="border" Value="#19000000"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -247,7 +247,7 @@
     <Grid Canvas.Left="0" Canvas.Top="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Canvas Name="SettingsButtonBackground" HorizontalAlignment="Left" MinHeight="32" Margin="4,4,0,0" VerticalAlignment="Top" MinWidth="32" Background="#FF244464"/>
         <Canvas Name="SettingsButton" HorizontalAlignment="Left" MinHeight="32" Margin="4,4,0,0" VerticalAlignment="Top" MinWidth="32"/>
-        <Canvas Name="MoveButton" MinHeight="32" Margin="36,4,124,0" VerticalAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Disabled" Cursor="SizeAll" Background="#00000000"/>
+        <Canvas Name="MoveButton" MinHeight="32" Margin="36,4,136,0" VerticalAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Disabled" Cursor="SizeAll" Background="#00000000"/>
         <Canvas x:Name="ClickThroughButtonBackground" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" Margin="0,4,100,0" MinWidth="32" Background="#FF244464" Opacity="0"/>
         <Canvas x:Name="ClickThroughButton" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" Margin="0,4,100,0" MinWidth="32"/>
         <Canvas x:Name="AutoScrollButtonBackground" HorizontalAlignment="Right" MinHeight="32" Margin="0,4,68,0" VerticalAlignment="Top" MinWidth="32" Background="#FF244464"/>

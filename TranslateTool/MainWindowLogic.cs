@@ -316,8 +316,6 @@ namespace TranslateTool
             AutoScrollButton.Background = new ImageBrush(BitmapToImageSource(Resources.AutoScroll));
             CloseButton.Background = new ImageBrush(BitmapToImageSource(Resources.Close));
             SettingsButton.Background = new ImageBrush(BitmapToImageSource(Resources.Settings));
-
-            //tooltipWindow.Show();
             ApplySettings();
             RegisterHotKey(mainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
             ApplyTranslation(new Language(VersionNumber));
@@ -484,10 +482,10 @@ namespace TranslateTool
                 Language = language;
                 WriteLine(language.Text[8]);
                 WriteLine(language.Text[11]);
-                //SetToolTip(ClickThroughButton, language.Text[12]);
-                //SetToolTip(AutoScrollButton, language.Text[13]);
-                //SetToolTip(AutoShowButton, language.Text[14]);
-                //SetToolTip(CloseButton, language.Text[15]);
+                ClickThroughButton.ToolTip = language.Text[12];
+                AutoScrollButton.ToolTip = language.Text[13];
+                AutoShowButton.ToolTip = language.Text[14];
+                CloseButton.ToolTip = language.Text[15];
                 PreventTransparencyCheck.Content = language.Text[17];
 
                 if (language.IsJapanese)
