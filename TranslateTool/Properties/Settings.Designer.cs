@@ -82,5 +82,29 @@ namespace TranslateTool.Properties {
                 this["PreventWindowTransparency"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ColourChatMessages {
+            get {
+                return ((bool)(this["ColourChatMessages"]));
+            }
+            set {
+                this["ColourChatMessages"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool PartialOpacity {
+            get {
+                return ((bool)(this["PartialOpacity"]));
+            }
+            set {
+                this["PartialOpacity"] = value;
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿<Window x:Class="ChatTranslator.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -238,13 +239,14 @@
                 </Trigger>
             </ControlTemplate.Triggers>
         </ControlTemplate>
+        <sys:Double x:Key="ScrollOpacity">1</sys:Double>
     </Window.Resources>
     <WindowChrome.WindowChrome>
         <WindowChrome 
         CaptionHeight="0"
         ResizeBorderThickness="6" />
     </WindowChrome.WindowChrome>
-    <Grid Canvas.Left="0" Canvas.Top="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <Grid x:Name="MainGrid" Canvas.Left="0" Canvas.Top="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Canvas Name="SettingsButtonBackground" HorizontalAlignment="Left" MinHeight="32" Margin="4,4,0,0" VerticalAlignment="Top" MinWidth="32" Background="#FF244464"/>
         <Canvas Name="SettingsButton" HorizontalAlignment="Left" MinHeight="32" Margin="4,4,0,0" VerticalAlignment="Top" MinWidth="32"/>
         <Canvas Name="MoveButton" MinHeight="32" Margin="36,4,136,0" VerticalAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Disabled" Cursor="SizeAll" Background="#00000000"/>
@@ -256,7 +258,7 @@
         <Canvas x:Name="AutoShowButton" HorizontalAlignment="Right" MinHeight="32" Margin="0,4,36,0" VerticalAlignment="Top" MinWidth="32"/>
         <Canvas x:Name="CloseButtonBackground" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Background="#FF244464" Margin="0,4,4,0"/>
         <Canvas x:Name="CloseButton" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Margin="0,4,4,0" HorizontalAlignment="Right"/>
-        <DockPanel LastChildFill="True" Margin="4,40,4,92" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF0C1D2C">
+        <DockPanel x:Name="OutputDock" LastChildFill="True" Margin="4,40,4,92" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF0C1D2C">
             <RichTextBox x:Name="Output" DockPanel.Dock="Top" Margin="4,4,4,4" Background="{x:Null}" BorderThickness="0" FontFamily="Arial" IsReadOnly="True" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" BorderBrush="{x:Null}" Foreground="#FFE6E6E6" FontSize="14" VerticalScrollBarVisibility="Visible">
 
                 <RichTextBox.Resources>
@@ -265,12 +267,13 @@
                     </Style>
                     <Style TargetType="{x:Type ScrollBar}">
                         <Setter Property="Template" Value="{DynamicResource ScrollBarControlTemplate1}"/>
+                        <Setter Property="Opacity" Value="{DynamicResource ScrollOpacity}"/>
                     </Style>
 
                 </RichTextBox.Resources>
             </RichTextBox>
         </DockPanel>
-        <DockPanel Margin="4,4,4,4" LastChildFill="True" Canvas.Left="8" Canvas.Top="256" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="#FF0C1D2C" Height="84">
+        <DockPanel x:Name="InputDock" Margin="4,4,4,4" LastChildFill="True" Canvas.Left="8" Canvas.Top="256" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="#FF0C1D2C" Height="84">
             <TextBox x:Name="Input" DockPanel.Dock="Top" Margin="4,4,4,4" Background="{x:Null}" BorderThickness="0" FontFamily="Arial" FontSize="14" BorderBrush="{x:Null}" Foreground="#FFE6E6E6" CaretBrush="#FFE6E6E6"/>
         </DockPanel>
     </Grid>

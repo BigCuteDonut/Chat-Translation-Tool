@@ -50,6 +50,7 @@ namespace TranslateTool
 
         public short Type;
         public short Age;
+        public object Color;
         public string Name;
         public string Text;
 

@@ -27,3 +27,6 @@
 16: 日本語インターフェースには適用されません。;;
 17: ウィンドウの透明化を防止します。;;
 18: The translator has no additional translation suggestions.;;
+19: Enable partial transparency.;;
+20: Partial transparency minimum.;;
+21: Colour chat messages.;;

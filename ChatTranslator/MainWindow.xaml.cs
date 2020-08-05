@@ -33,9 +33,9 @@ namespace ChatTranslator
         {
             var windowInteropHelper = new WindowInteropHelper(this);
             var settingsWindow = new SettingsWindow();
-
             Logic = new MainWindowLogic();
-            Logic.Load(windowInteropHelper.Handle,this,settingsWindow, (Canvas)FindName("ClickThroughButton"), (Canvas)FindName("AutoShowButton"), (Canvas)FindName("AutoScrollButton"), (Canvas)FindName("SettingsButton"), (Canvas)FindName("CloseButton"), (Canvas)FindName("AutoShowButtonBackground"), (Canvas)FindName("AutoScrollButtonBackground"), (Canvas)FindName("SettingsButtonBackground"), (Canvas)FindName("CloseButtonBackground"), (Canvas)FindName("MoveButton"), (RichTextBox)FindName("Output"), (TextBox)FindName("Input"), (CheckBox)settingsWindow.FindName("PreventTransparencyCheck"), (CheckBox)settingsWindow.FindName("ShowAdditionalInfoCheck"));
+
+            Logic.Load(windowInteropHelper.Handle,this,settingsWindow, (Grid)FindName("MainGrid"), (DockPanel)FindName("OutputDock"), (DockPanel)FindName("InputDock"), (Canvas)FindName("ClickThroughButton"), (Canvas)FindName("AutoShowButton"), (Canvas)FindName("AutoScrollButton"), (Canvas)FindName("SettingsButton"), (Canvas)FindName("CloseButton"), (Canvas)FindName("AutoShowButtonBackground"), (Canvas)FindName("AutoScrollButtonBackground"), (Canvas)FindName("SettingsButtonBackground"), (Canvas)FindName("CloseButtonBackground"), (Canvas)FindName("MoveButton"), (RichTextBox)FindName("Output"), (TextBox)FindName("Input"), (CheckBox)settingsWindow.FindName("PreventTransparencyCheck"), (CheckBox)settingsWindow.FindName("ShowAdditionalInfoCheck"), (CheckBox)settingsWindow.FindName("PartialTransparencyCheck"), (CheckBox)settingsWindow.FindName("ColourChatMessagesCheck"));
         }
 
         private void Style_Scroll(object sender, ScrollEventArgs e)

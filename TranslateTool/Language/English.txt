@@ -29,3 +29,6 @@ Commands:
 16: Show addition info when translating input.;;
 17: Prevent window from becoming transparent.;;
 18: The translator has no additional translation suggestions.;;
+19: Enable partial transparency.;;
+20: Partial transparency minimum.;;
+21: Colour chat messages.;;

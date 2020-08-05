@@ -36,19 +36,23 @@ namespace TranslateTool
         private static bool closeWatchStop = false;
         private static Thread thread;
         private static Thread browserThread;
-        //TODO Redesign the data class to use safe code. Leftover from interop platform.
-        private unsafe static byte* view;
         private static Data data;
         private static int cycles;
         private static Stack<Browser> translateFromBrowsers;
         private static Browser translateToBrowser;
         private static bool translateToBusy = false;
         private static bool inputInfoEnabled = false;
+        private static bool colourChat = false;
         private static Hinter hinter;
         private static int instanceCount = 4;
         private static Regex commandRegex;
         private static int retryCount = 0;
         private static MainWindowLogic mainWindow;
+        private static readonly System.Windows.Media.Color partyChatColour = System.Windows.Media.Color.FromRgb(96, 218, 235);
+        private static readonly System.Windows.Media.Color teamChatColour = System.Windows.Media.Color.FromRgb(225, 154, 27);
+        private static readonly System.Windows.Media.Color whisperChatColour = System.Windows.Media.Color.FromRgb(185, 97, 205);
+        private static readonly System.Windows.Media.Color groupChatColour = System.Windows.Media.Color.FromRgb(225, 154, 27);
+        private static readonly System.Windows.Media.Color messageColour = System.Windows.Media.Color.FromRgb(230, 230, 230);
         public static Language Language;
         public static string Input;
 
@@ -165,9 +169,10 @@ namespace TranslateTool
             return message;
         }
 
-        private static void HandleChatMessage(string name, string message)
+        private static void HandleChatMessage(string name, string message, string type)
         {
             var translated = false;
+            object colour = messageColour;
 
             message = RemoveCommand(message);
 
@@ -176,18 +181,63 @@ namespace TranslateTool
                 return;
             }
 
+            if (colourChat)
+            {
+                if (type == "PUBLIC")
+                {
+                    colour = System.Windows.Media.Color.FromRgb(230, 230, 230);
+                }
+                else if (type == "PARTY")
+                {
+                    colour = partyChatColour;
+                }
+                else if (type == "GUILD")
+                {
+                    colour = teamChatColour;
+                }
+                else if (type == "REPLY")
+                {
+                    colour = whisperChatColour;
+                }
+                else if (type == "GROUP")
+                {
+                    colour = groupChatColour;
+                }
+            }
+            else
+            {
+                colour = null;
+            }
+
             foreach (var chr in message)
             {
                 if (Language.IsTargetLanguageChar(chr))
                 {
-                    TranslateChat(name, message);
+                    TranslateChat(name, message, colour);
                     translated = true;
                     break;
                 }
             }
             if (!translated)
             {
-                mainWindow.WriteLine($"{name}:\r\n  {message}");
+                string outputText;
+
+                if (name == string.Empty)
+                {
+                    outputText = $"{message}";
+                }
+                else
+                {
+                    outputText = $"{name}:\r\n{message}";
+                }
+                if (colour == null)
+                {
+                    mainWindow.WriteLine(outputText);
+                }
+                else
+                {
+                    mainWindow.WriteLine(outputText, (System.Windows.Media.Color)colour);
+                }
 
             }
         }
@@ -322,7 +372,7 @@ namespace TranslateTool
                             if (parts.Length == 6)
                             {
                                 time = parts[0];
-                                unknown = parts[2];
+                                unknown = parts[1];
                                 type = parts[2];
                                 userID = parts[3];
                                 name = parts[4];
@@ -332,8 +382,9 @@ namespace TranslateTool
                             {
                                 name = previousName;
                                 message = newLine;
+                                type = "";
                             }
-                            HandleChatMessage(name, message);
+                            HandleChatMessage(name, message, type);
                             previousName = name;
                         }
                     }
@@ -347,7 +398,7 @@ namespace TranslateTool
                 }
                 HandleInputCommand();
 
-                foreach(var package in data.Packages)
+                foreach (var package in data.Packages)
                 {
                     HandlePackage(package);
                 }
@@ -359,7 +410,7 @@ namespace TranslateTool
         {
             while (!closeWatchStop)
             {
-                foreach(var package in data.Packages.ToArray())
+                foreach (var package in data.Packages.ToArray())
                 {
                     HandleBrowserPackage(package);
                 }
@@ -558,18 +609,36 @@ namespace TranslateTool
         }
 
         //Idea: Could include previous messages to translate to give the translator more context. \n{infuo}\n seems to be a marker that survives translation. It could be used as a separator.
-        public static void TranslateChat(string name, string text)
+        public static void TranslateChat(string name, string text, object color)
         {
             var data = Translate.data.AddPackage();
 
             data.SetTextLimited(text);
+            data.Color = color;
             data.Name = name;
             data.Type = PackageTypes.TranslateChat;
         }
 
         public static void ProcessTranslatedChat(DataPackage package)
         {
-            mainWindow.WriteLine($"{package.Name}:\r\n{package.Text}");
+            string outputText;
+
+            if (package.Name == string.Empty)
+            {
+                outputText = $"{package.Text}";
+            }
+            else
+            {
+                outputText = $"{package.Name}:\r\n{package.Text}";
+            }
+            if (package.Color == null)
+            {
+                mainWindow.WriteLine(outputText);
+            }
+            else
+            {
+                mainWindow.WriteLine(outputText, (System.Windows.Media.Color)package.Color);
+            }
             package.Clear();
         }
 
@@ -706,6 +775,16 @@ namespace TranslateTool
             {
                 hinter = new Hinter();
             }
+        }
+
+        public static void DisableColourChat()
+        {
+            colourChat = false;
+        }
+
+        public static void EnableColourChat()
+        {
+            colourChat = true;
         }
 
     }
