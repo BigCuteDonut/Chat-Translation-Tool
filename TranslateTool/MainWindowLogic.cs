@@ -33,7 +33,6 @@ using System.Drawing;
 using System.Threading;
 using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Windows.Controls.Primitives;
 using System.Linq;
 
@@ -136,7 +135,7 @@ namespace TranslateTool
     }
     public partial class MainWindowLogic
     {
-        public const string VersionNumber = "1.1.0";
+        public const string VersionNumber = "1.1.0b";
         public const double WaitDelay = 1.5;
         public const double FadeTime = 0.5;
         public const double ShowDelay = 0.2;
@@ -173,13 +172,14 @@ namespace TranslateTool
         private double partialOpacity = 1;
         public bool Moving = false;
         public double TargetOpacity = 1;
+        public double ForceTargetOpacity = 0;
         public double LastPosX;
         public double LastPosY;
         public double LastX;
         public double LastY;
         public double Wait;
+        public double ForceWait = 1;
         public double TimeScale = 0.2;
-        public double ToolTipTargetOpacity = 0;
         public bool ToolTipShow = false;
         public bool AutoScrollEnabled = true;
         public bool AutoShowEnabled = false;
@@ -231,7 +231,7 @@ namespace TranslateTool
             set
             {
                 var alphaWindow = (byte)(Math.Round(value * 255));
-                var alphaOutputBackground = (byte)(75 + Math.Round(value * 180));
+                var alphaOutputBackground = (byte)(95 + Math.Round(value * 160));
 
                 MainWindow.Background =
                     new SolidColorBrush(System.Windows.Media.Color.FromArgb(alphaWindow, BackgroundColor.R, BackgroundColor.G, BackgroundColor.B));
@@ -274,46 +274,9 @@ namespace TranslateTool
             }
         }
 
-        public void ToolTipEnter(object sender, MouseEventArgs e)
-        {
-            HandleToolTip((Canvas)sender);
-        }
-
-        public void ToolTipLeave(object sender, MouseEventArgs e)
-        {
-            CancelToolTip();
-        }
-
-        public void SetToolTip(Canvas control, string text)
-        {
-            ToolTipInfo[control] = text;
-            control.MouseEnter += ToolTipEnter;
-            control.MouseLeave += ToolTipLeave;
-        }
-
-        public void HandleToolTip(Canvas control)
-        {
-            if (ToolTipInfo.TryGetValue(control, out string text))
-            {
-
-                var textSize = System.Windows.Forms.TextRenderer.MeasureText(text, new System.Drawing.Font(ToolTip.FontFamily.Source, (float)ToolTip.FontSize, System.Drawing.FontStyle.Regular), new System.Drawing.Size(260, 500), System.Windows.Forms.TextFormatFlags.WordBreak);
-
-                ToolTip.Width = textSize.Width;
-                ToolTip.Height = textSize.Height;
-                ToolTip.Left = System.Windows.Forms.Cursor.Position.X;
-                ToolTip.Top = System.Windows.Forms.Cursor.Position.Y + (System.Windows.Forms.Cursor.Current.Size.Height / 2);
-                ToolTipTargetOpacity = 1;
-            }
-        }
-
         public void Invoke(Action action)
         {
             MainWindow.Dispatcher.Invoke(action);
-        }
-
-        public void CancelToolTip()
-        {
-            ToolTipTargetOpacity = 0;
         }
 
         public void ApplySettings()
@@ -611,8 +574,16 @@ namespace TranslateTool
 
             if (AutoShowEnabled)
             {
-                TargetOpacity = 1;
-                Wait = 4;
+                if (partialOpacityEnabled)
+                {
+                    ForceTargetOpacity = 1;
+                    ForceWait += 0.4 + (text.Length * 0.10);
+                }
+                else
+                {
+                    TargetOpacity = 1;
+                    Wait = 0.4 + (text.Length * 0.10);
+                }
             }
         }
 
@@ -684,10 +655,12 @@ namespace TranslateTool
             if (bounds.Contains(cursorPosition))
             {
                 TargetOpacity = 1;
+                ForceTargetOpacity = 1;
 
                 if (InterfaceOpacity == 1)
                 {
                     Wait = 1;
+                    ForceWait = 1.5;
                 }
             }
             else
@@ -699,6 +672,17 @@ namespace TranslateTool
                 else if (Wait <= 0)
                 {
                     TargetOpacity = 0;
+                }
+                if (AutoShowEnabled && partialOpacityEnabled)
+                {
+                    if (MainWindow.Opacity == 1 && ForceWait > 0)
+                    {
+                        ForceWait = e.Subtract(ForceWait, WaitDelay);
+                    }
+                    else if (ForceWait <= 0)
+                    {
+                        ForceTargetOpacity = 0;
+                    }
                 }
             }
             if (Moving)
@@ -715,6 +699,7 @@ namespace TranslateTool
                     MainWindow.Top = newPos.Y;
                 }
                 TargetOpacity = 1;
+                ForceTargetOpacity = 1;
             }
             if (AutoHideEnabled)
             {
@@ -743,6 +728,33 @@ namespace TranslateTool
                     {
                         InterfaceOpacity = 0;
                     }
+                }
+                if(AutoShowEnabled && partialOpacityEnabled)
+                {
+                    if (MainWindow.Opacity < ForceTargetOpacity)
+                    {
+                        MainWindow.Opacity = e.Add(MainWindow.Opacity, ShowDelay);
+                    }
+                    else
+                    {
+                        if (ForceWait > 0)
+                        {
+                            ForceWait = e.Subtract(ForceWait, WaitDelay);
+                        }
+                        else
+                        {
+                            MainWindow.Opacity = e.Subtract(MainWindow.Opacity, FadeTime);
+                        }
+                    }
+                    if (MainWindow.Opacity > 1)
+                    {
+                        MainWindow.Opacity = 1;
+                    }
+                    else if (MainWindow.Opacity < 0)
+                    {
+                        MainWindow.Opacity = 0;
+                    }
+
                 }
             }
             else

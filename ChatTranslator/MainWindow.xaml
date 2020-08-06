@@ -259,7 +259,7 @@
         <Canvas x:Name="CloseButtonBackground" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Background="#FF244464" Margin="0,4,4,0"/>
         <Canvas x:Name="CloseButton" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Margin="0,4,4,0" HorizontalAlignment="Right"/>
         <DockPanel x:Name="OutputDock" LastChildFill="True" Margin="4,40,4,92" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF0C1D2C">
-            <RichTextBox x:Name="Output" DockPanel.Dock="Top" Margin="4,4,4,4" Background="{x:Null}" BorderThickness="0" FontFamily="Arial" IsReadOnly="True" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" BorderBrush="{x:Null}" Foreground="#FFE6E6E6" FontSize="14" VerticalScrollBarVisibility="Visible">
+            <RichTextBox x:Name="Output" DockPanel.Dock="Top" Margin="4,4,4,4" Background="{x:Null}" BorderThickness="0" FontFamily="Arial" IsReadOnly="True" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" BorderBrush="{x:Null}" Foreground="#FFE6E6E6" FontSize="16" VerticalScrollBarVisibility="Visible">
 
                 <RichTextBox.Resources>
                     <Style TargetType="{x:Type Paragraph}">
@@ -271,6 +271,9 @@
                     </Style>
 
                 </RichTextBox.Resources>
+                <RichTextBox.Effect>
+                    <DropShadowEffect ShadowDepth="0" Opacity="0.9"/>
+                </RichTextBox.Effect>
             </RichTextBox>
         </DockPanel>
         <DockPanel x:Name="InputDock" Margin="4,4,4,4" LastChildFill="True" Canvas.Left="8" Canvas.Top="256" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="#FF0C1D2C" Height="84">

@@ -50,8 +50,8 @@ namespace TranslateTool
         private static MainWindowLogic mainWindow;
         private static readonly System.Windows.Media.Color partyChatColour = System.Windows.Media.Color.FromRgb(96, 218, 235);
         private static readonly System.Windows.Media.Color teamChatColour = System.Windows.Media.Color.FromRgb(225, 154, 27);
-        private static readonly System.Windows.Media.Color whisperChatColour = System.Windows.Media.Color.FromRgb(185, 97, 205);
-        private static readonly System.Windows.Media.Color groupChatColour = System.Windows.Media.Color.FromRgb(225, 154, 27);
+        private static readonly System.Windows.Media.Color whisperChatColour = System.Windows.Media.Color.FromRgb(205, 97, 185);
+        private static readonly System.Windows.Media.Color groupChatColour = System.Windows.Media.Color.FromRgb(37, 225, 87);
         private static readonly System.Windows.Media.Color messageColour = System.Windows.Media.Color.FromRgb(230, 230, 230);
         public static Language Language;
         public static string Input;
