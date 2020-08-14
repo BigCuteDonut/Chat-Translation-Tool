@@ -206,6 +206,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Browser.cs" />
+    <Compile Include="Command.cs" />
     <Compile Include="Data.cs" />
     <Compile Include="Hinter.cs" />
     <Compile Include="Language.cs" />

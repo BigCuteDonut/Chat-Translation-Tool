@@ -16,7 +16,6 @@ Commands:
 "/from <message>": This will translate a message from Japanese to English.
 "/jp": This will switch the program to Japanese user mode(WIP).
 "/search <words>": Search the Japanese word database for words based on their English meaning.
-"/engine <id>": Placeholder.
 "/help": Shows this message.
 ;;
 9: This command is not yet implemented.;;

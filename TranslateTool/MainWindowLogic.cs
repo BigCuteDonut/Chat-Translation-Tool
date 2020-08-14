@@ -91,7 +91,7 @@ namespace TranslateTool
                 window.Dispatcher.Invoke(() => { Tick.Invoke(this, new TickEventArgs((double)stopwatch.ElapsedTicks / 10000 / 1000)); });
                 stopwatch.Reset();
                 stopwatch.Start();
-                Thread.Sleep(2);
+                Thread.Sleep(16);
             }
         }
 
@@ -356,6 +356,7 @@ namespace TranslateTool
             ColourChatMessagesCheck = colourChatMessagesCheck;
             MainWindow.Closing += WindowClosing;
             MainWindow.Closed += WindowClosed;
+            MainWindow.SizeChanged += MainWindow_SizeChanged;
             Input.KeyDown += Input_KeyDown;
             Input.PreviewKeyDown += Input_PreviewKeyDown;
             SettingsWindow.Deactivated += SettingsWindow_Deactivate;
@@ -396,6 +397,11 @@ namespace TranslateTool
             Translate.Start(this);
             timer = new Timer(MainWindow, OnTick);
             timer.Start();
+        }
+
+        private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            Settings.Default.WindowSize = new System.Drawing.Size((int)MainWindow.Width, (int)MainWindow.Height);
         }
 
         private void PreventTransparencyCheck_Checked(object sender, RoutedEventArgs e)
@@ -553,6 +559,20 @@ namespace TranslateTool
                 }
 
             });
+
+            if (AutoShowEnabled)
+            {
+                if (partialOpacityEnabled)
+                {
+                    ForceTargetOpacity = 1;
+                    ForceWait += 1.1 + (text.Length * 0.09);
+                }
+                else
+                {
+                    TargetOpacity = 1;
+                    Wait = 1.1 + (text.Length * 0.09);
+                }
+            }
         }
 
         public void WriteLine(string text)

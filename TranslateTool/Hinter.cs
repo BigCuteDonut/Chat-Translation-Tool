@@ -266,6 +266,10 @@ namespace TranslateTool
             kanaConvert["\u30bf"] = "ta";
             kanaConvert["\u30c6"] = "te";
             kanaConvert["\u30c8"] = "to";
+            kanaConvert["サ"] = "sa";
+            kanaConvert["セ"] = "se";
+            kanaConvert["ス"] = "su";
+            kanaConvert["ソ"] = "so";
             kanaConvert["\u30f3"] = "n";
 
             fileBytes = File.ReadAllBytes("WordDatabase.bin");
@@ -294,7 +298,9 @@ namespace TranslateTool
                 .Replace("\u30c1\u30e3", "cha")
                 .Replace("\u30c1\u30e5", "chu")
                 .Replace("\u30c1\u30e7", "cho");
+
             var finalResult = "";
+
             for (int i = 0, l = result.Length; i < l; i++)
             {
                 var chr = result[i].ToString();
@@ -311,6 +317,67 @@ namespace TranslateTool
             }
             return finalResult;
         }
+        private List<Entry> SubSearchKanji(SortedItem current, string input)
+        {
+            var results = new List<Entry>();
+            var matched = true;
+
+            if (current.Result != null)
+            {
+                if (current.Result.WithKanji != string.Empty)
+                {
+                    var check = current.Result.WithKanji;
+
+                    if (!check.Contains(input))
+                    {
+                        matched = false;
+                    }
+                    if (matched)
+                    {
+                        results.Add(current.Result);
+                    }
+                }
+            }
+            foreach (var value in current.Next.Values)
+            {
+                results.AddRange(SubSearchKanji(value, input));
+            }
+            return results;
+        }
+
+        public List<Entry> SearchKanji(string input)
+        {
+            var results = new List<Entry>();
+
+            foreach (var value in _database.Values)
+            {
+                results.AddRange(SubSearchKanji(value, input));
+            }
+
+            return results;
+        }
+
+        public string FindWordsByKanji(string input)
+        {
+            var result = "";
+            var i = 0;
+            var searchResult = SearchKanji(input);
+
+            searchResult.Sort((a, b) => { return a.WithKanji.Length - b.WithKanji.Length; });
+
+            foreach (var entry in searchResult)
+            {
+                result += $"{entry.WithKanji} ({entry.Reading}|{HintKana(entry.Reading)}):{entry.Meaning}\r\n";
+
+                if (i++ == 10)
+                {
+                    break;
+                }
+            }
+
+            return result;
+        }
+
         private List<Entry> SubSearchMeaning(SortedItem current, List<string> input)
         {
             var results = new List<Entry>();

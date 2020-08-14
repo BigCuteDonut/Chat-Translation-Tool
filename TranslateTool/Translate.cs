@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -30,6 +31,8 @@ namespace TranslateTool
 {
     public static class Translate
     {
+        private static string DLEval = "document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__inner_textarea_container > textarea\").value";
+        private static string GGLEval = "var r = document.querySelector(\"body > div.container > div.frame > div.page.tlid-homepage.homepage.translate-text > div.homepage-content-wrap > div.tlid-source-target.main-header > div.source-target-row > div.tlid-results-container.results-container > div.tlid-result.result-dict-wrapper > div.result.tlid-copy-target > div.text-wrap.tlid-copy-target > div > span.tlid-translation.translation\").innerText; var p = \"\"; if(r.length > 2) var p = r.substr(r.length - 3); if(p == \"...\"){r = \"\";} r";
         private static string fileName;
         private static FileStream file;
         private static long lastFileLength;
@@ -47,6 +50,7 @@ namespace TranslateTool
         private static int instanceCount = 4;
         private static Regex commandRegex;
         private static int retryCount = 0;
+        private static string lastInput = "";
         private static MainWindowLogic mainWindow;
         private static readonly System.Windows.Media.Color partyChatColour = System.Windows.Media.Color.FromRgb(96, 218, 235);
         private static readonly System.Windows.Media.Color teamChatColour = System.Windows.Media.Color.FromRgb(225, 154, 27);
@@ -63,11 +67,19 @@ namespace TranslateTool
             public string Text;
         }
 
-        unsafe static Translate()
+        static Translate()
         {
             commandRegex = new Regex("/(?:(?:a|p|t)|(?:(?:cmf|camouflage) \\S+)|(?:(?:la|cla|mla|fla) \\S+)|(?:ce\\d)|(?:ceall)|(?:ceall (?:(?:on)|(?:off)))|(?:ci\\d \\d)|(?:ci\\d+)|(?:face\\d (?:(?:on)|(?:off)))|(?:face\\d)|(?:fc\\d (?:(?:on)|(?:off)))|(?:fc\\d)|(?:mn\\d+)|(?:mpal\\d)|(?:moya)|(?:spal\\d+)|(?:toge)|(?:symbol\\d+)|(?:vo\\d+)|(?:mf\\d+)|(?:sr\\d+))");
             data = new Data();
             fileName = "";
+
+            Command.Add(true, CommandRETRY, "retry", "re", "r");
+            Command.Add(true, CommandEN, "en", "english");
+            Command.Add(true, CommandJP, "jp", "japanese");
+            Command.Add(true, CommandHELP, "help", "h");
+            Command.Add(true, CommandFROM, "from", "f");
+            Command.Add(false, CommandSEARCH, "search", "find", "s");
+            Command.Add(true, CommandSEARCHKANJI, "searchkanji", "sk", "findkanji");
         }
 
         public static bool LoadFile()
@@ -242,6 +254,77 @@ namespace TranslateTool
             }
         }
 
+        private static void CommandJP(string[] args)
+        {
+            if (!Language.IsJapanese)
+            {
+                var language = new Language("ja", MainWindowLogic.VersionNumber);
+
+                Language = language;
+                mainWindow.ApplyTranslation(language);
+                mainWindow.SetInputValue($"");
+            }
+        }
+
+        private static void CommandEN(string[] args)
+        {
+            if (Language.IsJapanese)
+            {
+                var language = new Language("en", MainWindowLogic.VersionNumber);
+
+                Language = language;
+                mainWindow.ApplyTranslation(language);
+                mainWindow.SetInputValue($"");
+            }
+        }
+
+        private static void CommandRETRY(string[] args)
+        {
+            RetryTranslateTo();
+            mainWindow.SetInputValue("");
+        }
+
+        private static void CommandHELP(string[] args)
+        {
+            mainWindow.WriteLine(Language.Text[8]);
+            mainWindow.SetInputValue("");
+        }
+
+        private static void CommandFROM(string[] args)
+        {
+            if (args.Length > 0)
+            {
+                TranslateInputFrom(args[0]);
+                mainWindow.SetInputValue($"");
+            }
+        }
+
+        private static void CommandSEARCH(string[] args)
+        {
+            if (args.Length > 0)
+            {
+                if (hinter == null)
+                {
+                    hinter = new Hinter();
+                }
+                mainWindow.WriteLine(hinter.FindWordsByMeaning(args.ToList()));
+                mainWindow.SetInputValue($"");
+            }
+        }
+
+        private static void CommandSEARCHKANJI(string[] args)
+        {
+            if (args.Length > 0)
+            {
+                if (hinter == null)
+                {
+                    hinter = new Hinter();
+                }
+                mainWindow.WriteLine(hinter.FindWordsByKanji(args[0]));
+                mainWindow.SetInputValue($"");
+            }
+        }
+
         private static void HandleInputCommand()
         {
             if (Input != null)
@@ -256,75 +339,17 @@ namespace TranslateTool
                     }
                     else
                     {
-                        if (Input.Trim(' ').ToLower() == "/jp")
-                        {
-                            if (!Language.IsJapanese)
-                            {
-                                var language = new Language("ja", MainWindowLogic.VersionNumber);
+                        mainWindow.SetInputValue($"");
 
-                                Language = language;
-                                mainWindow.ApplyTranslation(language);
-                                mainWindow.SetInputValue($"");
-                            }
-                        }
-                        else if (Input.Trim(' ').ToLower() == "/en")
-                        {
-                            if (Language.IsJapanese)
-                            {
-                                var language = new Language("en", MainWindowLogic.VersionNumber);
+                        var result = Command.Process(Input);
 
-                                Language = language;
-                                mainWindow.ApplyTranslation(language);
-                                mainWindow.SetInputValue($"");
-                            }
-                        }
-                        else if (Input.Trim(' ').ToLower() == "/re")
+                        if (result != null)
                         {
-                            RetryTranslateTo();
-                            mainWindow.SetInputValue("");
+                            mainWindow.WriteLine(string.Format(Language.Text[3], result));
                         }
-                        else if (Input.Trim(' ').ToLower() == "/help")
-                        {
-                            mainWindow.WriteLine(Language.Text[8]);
-                            mainWindow.SetInputValue("");
-                        }
-                        else
-                        {
-                            var command = "";
-                            if (Input.Length > 6)
-                            {
-                                command = Input.Substring(0, 6).ToLower();
-
-                                if (command == "/from ")
-                                {
-                                    TranslateInputFrom(Input.TrimStart(' ').Substring(6));
-                                    mainWindow.SetInputValue($"");
-                                }
-                                else if (Input.Length > 8)
-                                {
-                                    command = Input.Substring(0, 8).ToLower();
-
-                                    if (command == "/search ")
-                                    {
-                                        mainWindow.WriteLine(HinterSearch(Input.TrimStart(' ').Substring(8)));
-                                        mainWindow.SetInputValue($"");
-                                    }
-                                    else if (command == "/engine ")
-                                    {
-                                        mainWindow.WriteLine(Language.Text[9]);
-                                        mainWindow.SetInputValue($"");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                mainWindow.WriteLine(string.Format(Language.Text[3], Input));
-                                mainWindow.SetInputValue($"");
-                            }
-                        }
-                        Input = null;
                     }
                 }
+                Input = null;
             }
         }
 
@@ -446,7 +471,7 @@ namespace TranslateTool
 
         }
 
-        private static async Task<string> TranslateAny(Browser browser, string url, string text)
+        private static async Task<string> TranslateAny(Browser browser, string url, string eval, string text)
         {
             if (text == "")
             {
@@ -463,7 +488,7 @@ namespace TranslateTool
                     targetBrowser.PageInitialize();
                     while (true)
                     {
-                        var result = targetBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__inner_textarea_container > textarea\").value").GetAwaiter().GetResult().Result.ToString();
+                        var result = targetBrowser.Page.EvaluateScriptAsync(eval).GetAwaiter().GetResult().Result.ToString();
                         var timeout = 8000;
 
                         if (result == "")
@@ -507,7 +532,7 @@ namespace TranslateTool
                 Thread.Sleep(50);
             }
             var browser = translateFromBrowsers.Pop();
-            var result = await TranslateAny(browser, link, text);
+            var result = await TranslateAny(browser, link, DLEval, text);
 
             translateFromBrowsers.Push(browser);
 
@@ -517,6 +542,9 @@ namespace TranslateTool
         private static async Task<string> TranslateTo(string text)
         {
             string link;
+            string eval = DLEval;
+
+            lastInput = text;
 
             if (Language.IsJapanese)
             {
@@ -524,7 +552,16 @@ namespace TranslateTool
             }
             else
             {
-                link = "https://www.deepl.com/translator#en/ja/";
+                if (retryCount == 0)
+                {
+                    text = text.TrimEnd('.');
+                    eval = GGLEval;
+                    link = "https://translate.google.com/#view=home&op=translate&sl=en&tl=ja&text=";
+                }
+                else
+                {
+                    link = "https://www.deepl.com/translator#en/ja/";
+                }
             }
 
             while (translateToBusy)
@@ -533,7 +570,7 @@ namespace TranslateTool
             }
             translateToBusy = true;
 
-            var result = await TranslateAny(translateToBrowser, link, text);
+            var result = await TranslateAny(translateToBrowser, link, eval, text);
 
             translateToBusy = false;
 
@@ -686,25 +723,6 @@ namespace TranslateTool
             data.Text = text;
         }
 
-        public static string HinterSearch(string text)
-        {
-            var words = text.Split(' ').ToList();
-
-            for (var i = 0; i < words.Count; i++)
-            {
-                if (words[i] == "")
-                {
-                    words.RemoveAt(i);
-                    i--;
-                }
-            }
-            if (hinter == null)
-            {
-                hinter = new Hinter();
-            }
-            return hinter.FindWordsByMeaning(words);
-        }
-
         public static string HinterTranslate(string text)
         {
             try
@@ -721,17 +739,42 @@ namespace TranslateTool
         {
             object alternative = null;
 
-            if (retryCount == 0)
+            if (Language.IsJapanese)
             {
-                alternative = translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(3) > button.lmt__translations_as_text__text_btn\").innerText").GetAwaiter().GetResult().Result;
+                if (retryCount == 0)
+                {
+                    retryCount++;
+                }
+            }
+            if (retryCount == 0 && lastInput != string.Empty)
+            {
+                retryCount++;
+                alternative = await TranslateTo(lastInput);
+                retryCount--;
             }
             else if (retryCount == 1)
             {
-                alternative = translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(4) > button.lmt__translations_as_text__text_btn\").innerText").GetAwaiter().GetResult().Result;
+                var response = await translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(3) > button.lmt__translations_as_text__text_btn\").innerText");
+                if (response.Result != null)
+                {
+                    alternative = response.Result.ToString();
+                }
             }
             else if (retryCount == 2)
             {
-                alternative = translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(5) > button.lmt__translations_as_text__text_btn\").innerText").GetAwaiter().GetResult().Result;
+                var response = await translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(4) > button.lmt__translations_as_text__text_btn\").innerText");
+                if (response.Result != null)
+                {
+                    alternative = response.Result.ToString();
+                }
+            }
+            else if (retryCount == 3)
+            {
+                var response = await translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(5) > button.lmt__translations_as_text__text_btn\").innerText");
+                if (response.Result != null)
+                {
+                    alternative = response.Result.ToString();
+                }
             }
             if (alternative == null)
             {
