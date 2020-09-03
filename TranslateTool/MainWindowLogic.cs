@@ -116,6 +116,7 @@ namespace TranslateTool
         public static ImageBrush ClickThroughDisabled = new ImageBrush(BitmapToImageSource(Resources.ClickThroughDisabled));
         public static ImageBrush AutoShowDisabled = new ImageBrush(BitmapToImageSource(Resources.AutoShowDisabled));
         public static ImageBrush AutoScrollDisabled = new ImageBrush(BitmapToImageSource(Resources.AutoScrollDisabled));
+        public static ImageBrush Minimise = new ImageBrush(BitmapToImageSource(Resources.Minimise));
 
         private static BitmapImage BitmapToImageSource(Bitmap bitmap)
         {
@@ -135,7 +136,7 @@ namespace TranslateTool
     }
     public partial class MainWindowLogic
     {
-        public const string VersionNumber = "1.1.0b";
+        public const string VersionNumber = "1.2.0";
         public const double WaitDelay = 1.5;
         public const double FadeTime = 0.5;
         public const double ShowDelay = 0.2;
@@ -143,6 +144,7 @@ namespace TranslateTool
         public static Language Language;
         public static System.Windows.Media.Color BackgroundColor = System.Windows.Media.Color.FromRgb(19, 41, 63);
         public static System.Windows.Media.Color TextBackgroundColor = System.Windows.Media.Color.FromRgb(12, 29, 44);
+        public static System.Windows.Media.Color TextColor = System.Windows.Media.Color.FromRgb(255, 255, 255);
 
         [DllImport("user32.dll")]
         public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vlc);
@@ -201,9 +203,11 @@ namespace TranslateTool
         public Canvas CloseButton;
         public Canvas SettingsButton;
         public Canvas MoveButton;
+        public Canvas MinimiseButton;
         public Canvas AutoScrollButtonBackground;
         public Canvas AutoShowButtonBackground;
         public Canvas CloseButtonBackground;
+        public Canvas MinimiseButtonBackground;
         public Canvas SettingsButtonBackground;
         public RichTextBox Output;
         public TextBox Input;
@@ -211,12 +215,18 @@ namespace TranslateTool
         public CheckBox ShowAdditionalInfoCheck;
         public CheckBox PartialOpacityCheck;
         public CheckBox ColourChatMessagesCheck;
+        public CheckBox DisableClickthroughCheck;
+        public RadioButton EnglishRadio;
+        public RadioButton JapaneseRadio;
+        public Label LanguageSelectLabel;
         public bool SettingsShown = false;
         public bool AutoHideEnabled = true;
         public string[] InputHistory = new string[256];
         public byte HistoryIndex = 0;
         public byte HistoryCurrent = 0;
         public bool TranslatorLoaded = false;
+        public bool DisableClickthroughToggle = false;
+        public bool WasColouredLine = false;
 
         public MainWindowLogic()
         {
@@ -233,7 +243,7 @@ namespace TranslateTool
                 var alphaWindow = (byte)(Math.Round(value * 255));
                 var alphaOutputBackground = (byte)(95 + Math.Round(value * 160));
 
-                MainWindow.Background =
+                MainGrid.Background =
                     new SolidColorBrush(System.Windows.Media.Color.FromArgb(alphaWindow, BackgroundColor.R, BackgroundColor.G, BackgroundColor.B));
                 OutputDock.Background =
                     new SolidColorBrush(System.Windows.Media.Color.FromArgb(alphaOutputBackground, TextBackgroundColor.R, TextBackgroundColor.G, TextBackgroundColor.B));
@@ -244,6 +254,7 @@ namespace TranslateTool
                 AutoShowButton.Opacity = value;
                 CloseButton.Opacity = value;
                 AutoScrollButton.Opacity = value;
+                MinimiseButton.Opacity = value;
                 partialOpacity = value;
             }
         }
@@ -289,15 +300,30 @@ namespace TranslateTool
             PreventTransparencyCheck.IsChecked = Settings.Default.PreventWindowTransparency;
             partialOpacityEnabled = Settings.Default.PartialOpacity;
             PartialOpacityCheck.IsChecked = Settings.Default.PartialOpacity;
+            ColourChatMessagesCheck.IsChecked = Settings.Default.ColourChatMessages;
 
-            if(Settings.Default.ColourChatMessages)
+            if (Settings.Default.ColourChatMessages)
             {
                 ColourChatMessagesCheck.IsChecked = true;
+                Translate.EnableColourChat();
             }
             else
             {
                 ColourChatMessagesCheck.IsChecked = false;
+                Translate.DisableColourChat();
             }
+            if (Settings.Default.DisableClickThrough)
+            {
+                DisableClickthroughToggle = true;
+                DisableClickthroughCheck.IsChecked = true;
+                UnregisterHotKey(MainWindowHandle, 1);
+            }
+            else
+            {
+                DisableClickthroughCheck.IsChecked = false;
+                DisableClickthroughToggle = false;
+            }
+
         }
 
         public void ConfigureMouseClickEvent(UIElement element, Action<object, MouseEventArgs> action)
@@ -324,12 +350,15 @@ namespace TranslateTool
 
         }
 
-        public void Load(IntPtr mainWindowHandle, Window mainWindow, Window settingsWindow, Grid mainGrid, DockPanel outputDock, DockPanel inputDock, Canvas clickThroughButton, Canvas autoShowButton, Canvas autoScrollButton, Canvas settingsButton, Canvas closeButton, Canvas autoShowButtonBackground, Canvas autoScrollButtonBackground, Canvas settingsButtonBackground, Canvas closeButtonBackground, Canvas moveButton, RichTextBox output, TextBox input, CheckBox preventTransparencyCheck, CheckBox showAdditionalInfoCheck, CheckBox partialOpacityCheck, CheckBox colourChatMessagesCheck)
+        public void Load(IntPtr mainWindowHandle, Window mainWindow, Window settingsWindow, Grid mainGrid, DockPanel outputDock, DockPanel inputDock, Canvas clickThroughButton, Canvas autoShowButton, Canvas autoScrollButton, Canvas settingsButton, Canvas closeButton, Canvas autoShowButtonBackground, Canvas autoScrollButtonBackground, Canvas settingsButtonBackground, Canvas closeButtonBackground, Canvas moveButton, Canvas minimiseButton, Canvas minimiseButtonBackground, RichTextBox output, TextBox input, CheckBox preventTransparencyCheck, CheckBox showAdditionalInfoCheck, CheckBox partialOpacityCheck, CheckBox colourChatMessagesCheck, CheckBox disableClickThroughCheck, Label languageSelectLabel, RadioButton englishRadio, RadioButton japaneseRadio)
         {
             var dpiXProperty = typeof(SystemParameters).GetProperty("DpiX", BindingFlags.NonPublic | BindingFlags.Static);
             var dpiYProperty = typeof(SystemParameters).GetProperty("Dpi", BindingFlags.NonPublic | BindingFlags.Static);
             var h = HwndSource.FromVisual(mainWindow) as HwndSource;
 
+            BackgroundColor = ((SolidColorBrush)mainWindow.Resources["BaseColour"]).Color;
+            TextBackgroundColor = ((SolidColorBrush)mainWindow.Resources["SubsectionColour"]).Color;
+            TextColor = ((SolidColorBrush)mainWindow.Resources["TextColour"]).Color;
             h.AddHook(WndProc);
             dpiX = (double)96 / (int)dpiXProperty.GetValue(null, null);
             dpiY = (double)96 / (int)dpiYProperty.GetValue(null, null);
@@ -343,17 +372,37 @@ namespace TranslateTool
             AutoScrollButton = autoScrollButton;
             SettingsButton = settingsButton;
             CloseButton = closeButton;
+            MinimiseButton = minimiseButton;
             MoveButton = moveButton;
             AutoShowButtonBackground = autoShowButtonBackground;
             AutoScrollButtonBackground = autoScrollButtonBackground;
             SettingsButtonBackground = settingsButtonBackground;
             CloseButtonBackground = closeButtonBackground;
+            MinimiseButtonBackground = minimiseButtonBackground;
             Output = output;
             Input = input;
             PreventTransparencyCheck = preventTransparencyCheck;
             ShowAdditionalInfoCheck = showAdditionalInfoCheck;
             PartialOpacityCheck = partialOpacityCheck;
             ColourChatMessagesCheck = colourChatMessagesCheck;
+            DisableClickthroughCheck = disableClickThroughCheck;
+            LanguageSelectLabel = languageSelectLabel;
+            EnglishRadio = englishRadio;
+            JapaneseRadio = japaneseRadio;
+            ClickThroughButton.Background = ImageResources.ClickThroughDisabled;
+            AutoShowButton.Background = ImageResources.AutoShowDisabled;
+            AutoScrollButton.Background = ImageResources.AutoScroll;
+            CloseButton.Background = ImageResources.Close;
+            SettingsButton.Background = ImageResources.Settings;
+            MinimiseButton.Background = ImageResources.Minimise;
+            DisableAutoShowHighlight();
+            DisableAutoScrollHighlight();
+            DisableSettingsHighlight();
+            DisableCloseHighlight();
+            DisableMinimiseHighlight();
+            ApplySettings();
+            RegisterHotKey(mainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
+            ApplyTranslation(new Language(VersionNumber));
             MainWindow.Closing += WindowClosing;
             MainWindow.Closed += WindowClosed;
             MainWindow.SizeChanged += MainWindow_SizeChanged;
@@ -368,6 +417,8 @@ namespace TranslateTool
             SettingsButton.MouseLeave += SettingsButton_MouseLeave;
             CloseButton.MouseEnter += CloseButton_MouseEnter;
             CloseButton.MouseLeave += CloseButton_MouseLeave;
+            MinimiseButton.MouseEnter += MinimiseButton_MouseEnter;
+            MinimiseButton.MouseLeave += MinimiseButton_MouseLeave;
             MoveButton.MouseDown += MoveStart;
             PreventTransparencyCheck.Checked += PreventTransparencyCheck_Checked;
             PreventTransparencyCheck.Unchecked += PreventTransparencyCheck_UnChecked;
@@ -377,61 +428,84 @@ namespace TranslateTool
             PartialOpacityCheck.Unchecked += PartialOpacityCheck_UnChecked;
             ColourChatMessagesCheck.Checked += ColourChatMessagesCheck_Checked;
             ColourChatMessagesCheck.Unchecked += ColourChatMessagesCheck_UnChecked;
+            DisableClickthroughCheck.Checked += DisableClickthroughCheck_Checked;
+            DisableClickthroughCheck.Unchecked += DisableClickthroughCheck_UnChecked;
+            EnglishRadio.Checked += EnglishRadio_Checked;
+            JapaneseRadio.Checked += JapaneseRadio_Checked;
             ConfigureMouseClickEvent(AutoShowButton, AutoShowButton_Click);
             ConfigureMouseClickEvent(AutoScrollButton, AutoScrollButton_Click);
             ConfigureMouseClickEvent(SettingsButton, SettingsButton_Click);
             ConfigureMouseClickEvent(CloseButton, CloseButton_Click);
-            DisableAutoShowHighlight();
-            DisableAutoScrollHighlight();
-            DisableSettingsHighlight();
-            DisableCloseHighlight();
-            ClickThroughButton.Background = ImageResources.ClickThroughDisabled;
-            AutoShowButton.Background = ImageResources.AutoShowDisabled;
-            AutoScrollButton.Background = ImageResources.AutoScroll;
-            CloseButton.Background = ImageResources.Close;
-            SettingsButton.Background = ImageResources.Settings;
-            ApplySettings();
-            RegisterHotKey(mainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
-            ApplyTranslation(new Language(VersionNumber));
+            ConfigureMouseClickEvent(MinimiseButton, MinimiseButton_Click);
             Wait = 4;
             Translate.Start(this);
             timer = new Timer(MainWindow, OnTick);
             timer.Start();
         }
 
+        private void JapaneseRadio_Checked(object sender, RoutedEventArgs e)
+        {
+            if (!Language.IsJapanese)
+            {
+                var language = new Language("ja", MainWindowLogic.VersionNumber);
+
+                Translate.Language = language;
+                ApplyTranslation(language);
+                EnglishRadio.IsChecked = false;
+            }
+        }
+
+        private void EnglishRadio_Checked(object sender, RoutedEventArgs e)
+        {
+            if (Language.IsJapanese)
+            {
+                var language = new Language("en", MainWindowLogic.VersionNumber);
+
+                Language = language;
+                ApplyTranslation(language);
+                JapaneseRadio.IsChecked = false;
+            }
+        }
+
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             Settings.Default.WindowSize = new System.Drawing.Size((int)MainWindow.Width, (int)MainWindow.Height);
+            Settings.Default.Save();
         }
 
         private void PreventTransparencyCheck_Checked(object sender, RoutedEventArgs e)
         {
             AutoHideEnabled = false;
             Settings.Default.PreventWindowTransparency = false;
+            Settings.Default.Save();
         }
 
         private void PreventTransparencyCheck_UnChecked(object sender, RoutedEventArgs e)
         {
             AutoHideEnabled = true;
             Settings.Default.PreventWindowTransparency = true;
+            Settings.Default.Save();
         }
 
         private void ShowAdditionalInfoCheck_Checked(object sender, RoutedEventArgs e)
         {
             Translate.EnableAdditionalInputInfo();
             Settings.Default.InputInfoEnabled = true;
+            Settings.Default.Save();
         }
 
         private void ShowAdditionalInfoCheck_UnChecked(object sender, RoutedEventArgs e)
         {
             Translate.DisableAdditionalInputInfo();
             Settings.Default.InputInfoEnabled = false;
+            Settings.Default.Save();
         }
 
         private void PartialOpacityCheck_Checked(object sender, RoutedEventArgs e)
         {
             partialOpacityEnabled = true;
             Settings.Default.PartialOpacity = true;
+            Settings.Default.Save();
         }
 
         private void PartialOpacityCheck_UnChecked(object sender, RoutedEventArgs e)
@@ -439,18 +513,42 @@ namespace TranslateTool
             PartialOpacity = 1;
             partialOpacityEnabled = false;
             Settings.Default.PartialOpacity = false;
+            Settings.Default.Save();
         }
 
         private void ColourChatMessagesCheck_Checked(object sender, RoutedEventArgs e)
         {
             Settings.Default.ColourChatMessages = true;
+            Settings.Default.Save();
             Translate.EnableColourChat();
         }
 
         private void ColourChatMessagesCheck_UnChecked(object sender, RoutedEventArgs e)
         {
             Settings.Default.ColourChatMessages = false;
+            Settings.Default.Save();
+            RegisterHotKey(MainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
             Translate.DisableColourChat();
+        }
+
+        private void DisableClickthroughCheck_Checked(object sender, RoutedEventArgs e)
+        {
+            Settings.Default.DisableClickThrough = true;
+            Settings.Default.Save();
+            DisableClickthroughToggle = true;
+            UnregisterHotKey(MainWindowHandle, 1);
+
+            if (ClickThroughEnabled)
+            {
+                ToggleClickThrough(MainWindowHandle);
+            }
+        }
+
+        private void DisableClickthroughCheck_UnChecked(object sender, RoutedEventArgs e)
+        {
+            Settings.Default.DisableClickThrough = false;
+            DisableClickthroughToggle = false;
+            Settings.Default.Save();
         }
 
         public void RevertInput()
@@ -499,19 +597,22 @@ namespace TranslateTool
 
         public void ToggleClickThrough(IntPtr windowHandle)
         {
-            if (!ClickThroughEnabled)
+            if (!DisableClickthroughToggle)
             {
-                OldStyle = GetWindowLong(windowHandle, -20);
+                if (!ClickThroughEnabled)
+                {
+                    OldStyle = GetWindowLong(windowHandle, -20);
 
-                ClickThroughEnabled = true;
-                SetWindowLong(windowHandle, -20, OldStyle | 0x80000 | 0x20);
-                ClickThroughButton.Background = ImageResources.ClickThrough;
-            }
-            else
-            {
-                SetWindowLong(windowHandle, -20, OldStyle);
-                ClickThroughEnabled = false;
-                ClickThroughButton.Background = ImageResources.ClickThroughDisabled;
+                    ClickThroughEnabled = true;
+                    SetWindowLong(windowHandle, -20, OldStyle | 0x80000 | 0x20);
+                    ClickThroughButton.Background = ImageResources.ClickThrough;
+                }
+                else
+                {
+                    SetWindowLong(windowHandle, -20, OldStyle);
+                    ClickThroughEnabled = false;
+                    ClickThroughButton.Background = ImageResources.ClickThroughDisabled;
+                }
             }
         }
 
@@ -545,6 +646,7 @@ namespace TranslateTool
 
         public void WriteLine(string text, System.Windows.Media.Color color)
         {
+            WasColouredLine = true;
             MainWindow.Dispatcher.Invoke(() =>
             {
                 var textRange = new TextRange(Output.Document.ContentEnd, Output.Document.ContentEnd);
@@ -577,32 +679,40 @@ namespace TranslateTool
 
         public void WriteLine(string text)
         {
-            Action<string> action;
-            if (AutoScrollEnabled)
+            if (WasColouredLine)
             {
-                action = (value) =>
-                {
-                    Output.AppendText(value);
-                    Output.ScrollToEnd();
-                };
+                WriteLine(text, TextColor);
+                WasColouredLine = false;
             }
             else
             {
-                action = Output.AppendText;
-            }
-            MainWindow.Dispatcher.Invoke(action, text + "\r\n");
-
-            if (AutoShowEnabled)
-            {
-                if (partialOpacityEnabled)
+                Action<string> action;
+                if (AutoScrollEnabled)
                 {
-                    ForceTargetOpacity = 1;
-                    ForceWait += 0.4 + (text.Length * 0.10);
+                    action = (value) =>
+                    {
+                        Output.AppendText(value);
+                        Output.ScrollToEnd();
+                    };
                 }
                 else
                 {
-                    TargetOpacity = 1;
-                    Wait = 0.4 + (text.Length * 0.10);
+                    action = Output.AppendText;
+                }
+                MainWindow.Dispatcher.Invoke(action, text + "\r\n");
+
+                if (AutoShowEnabled)
+                {
+                    if (partialOpacityEnabled)
+                    {
+                        ForceTargetOpacity = 1;
+                        ForceWait += 0.4 + (text.Length * 0.10);
+                    }
+                    else
+                    {
+                        TargetOpacity = 1;
+                        Wait = 0.4 + (text.Length * 0.10);
+                    }
                 }
             }
         }
@@ -621,21 +731,32 @@ namespace TranslateTool
                 PreventTransparencyCheck.Content = language.Text[17];
                 PartialOpacityCheck.Content = language.Text[19];
                 ColourChatMessagesCheck.Content = language.Text[21];
+                DisableClickthroughCheck.Content = language.Text[22];
+                EnglishRadio.Content = language.Text[23];
+                JapaneseRadio.Content = language.Text[24];
+                LanguageSelectLabel.Content = language.Text[25];
+                MainWindow.Title = language.Text[26];
 
                 if (language.IsJapanese)
                 {
                     ShowAdditionalInfoCheck.IsEnabled = false;
                     ShowAdditionalInfoCheck.IsChecked = false;
                     Translate.DisableAdditionalInputInfo();
+                    Input.SpellCheck.IsEnabled = false;
+                    JapaneseRadio.IsChecked = true;
+                    EnglishRadio.IsChecked = false;
                 }
                 else
                 {
+                    Input.SpellCheck.IsEnabled = true;
                     ShowAdditionalInfoCheck.IsEnabled = true;
                     ShowAdditionalInfoCheck.IsChecked = Settings.Default.InputInfoEnabled;
                     if (ShowAdditionalInfoCheck.IsChecked ?? false)
                     {
                         Translate.EnableAdditionalInputInfo();
                     }
+                    JapaneseRadio.IsChecked = false;
+                    EnglishRadio.IsChecked = true;
                 }
                 ShowAdditionalInfoCheck.Content = language.Text[16];
             };
@@ -749,7 +870,7 @@ namespace TranslateTool
                         InterfaceOpacity = 0;
                     }
                 }
-                if(AutoShowEnabled && partialOpacityEnabled)
+                if (AutoShowEnabled && partialOpacityEnabled)
                 {
                     if (MainWindow.Opacity < ForceTargetOpacity)
                     {
@@ -810,7 +931,7 @@ namespace TranslateTool
         {
             SettingsWindow.Close();
             timer.Stop();
-            Translate.StopBrowsers();
+            Translate.Stop();
         }
 
         private void AutoScrollHighlight()
@@ -841,6 +962,16 @@ namespace TranslateTool
         private void DisableCloseHighlight()
         {
             CloseButtonBackground.Opacity = 0;
+        }
+
+        private void MinimiseHighlight()
+        {
+            MinimiseButtonBackground.Opacity = 1;
+        }
+
+        private void DisableMinimiseHighlight()
+        {
+            MinimiseButtonBackground.Opacity = 0;
         }
 
         private void SettingsHighlight()
@@ -908,6 +1039,21 @@ namespace TranslateTool
         private void CloseButton_MouseLeave(object sender, MouseEventArgs e)
         {
             DisableCloseHighlight();
+        }
+
+        private void MinimiseButton_Click(object sender, MouseEventArgs e)
+        {
+            MainWindow.WindowState = WindowState.Minimized;
+        }
+
+        private void MinimiseButton_MouseEnter(object sender, MouseEventArgs e)
+        {
+            MinimiseHighlight();
+        }
+
+        private void MinimiseButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            DisableMinimiseHighlight();
         }
 
         private void SettingsWindow_Deactivate(object sender, EventArgs e)

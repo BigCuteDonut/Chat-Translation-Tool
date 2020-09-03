@@ -5,11 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatTranslator"
         mc:Ignorable="d"
-        Title="SettingsWindow" Height="auto" Width="auto" AllowsTransparency="True" WindowStyle="None" ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize" SizeToContent="WidthAndHeight">
-    <Grid Background="#FF0C1D2C" Margin="0,0,0,0">
-        <CheckBox x:Name="ShowAdditionalInfoCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,36,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
-        <CheckBox x:Name="PreventTransparencyCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,56,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14"/>
-        <CheckBox x:Name="PartialTransparencyCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,76,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
-        <CheckBox x:Name="ColourChatMessagesCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,96,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+        Title="SettingsWindow" Height="auto" Width="auto" AllowsTransparency="True" WindowStyle="None" ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize" SizeToContent="WidthAndHeight" Loaded="Window_Loaded">
+    <Grid Background="#FF3A7DAC" Margin="0,0,0,0">
+        <Rectangle Fill="#FF0B1B2F" Height="auto" Margin="2,2,2,2" VerticalAlignment="Stretch" Width="auto" HorizontalAlignment="Stretch"/>
+        <Canvas x:Name="CloseButtonBackground" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Background="#FF244464" Margin="0,6,6,0"/>
+        <Canvas x:Name="CloseButton" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Margin="0,6,6,0" HorizontalAlignment="Right" MouseEnter="CloseButton_MouseEnter" MouseLeave="CloseButton_MouseLeave" Loaded="CloseButton_Loaded"/>
+        <CheckBox x:Name="ShowAdditionalInfoCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,44,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+        <CheckBox x:Name="PreventTransparencyCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,64,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14"/>
+        <CheckBox x:Name="PartialTransparencyCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,84,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+        <CheckBox x:Name="ColourChatMessagesCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,104,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+        <CheckBox x:Name="DisableClickthroughCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,124,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+        <Rectangle Fill="#FF091927" Height="58" Margin="10,142,10,16" VerticalAlignment="Top" Width="auto" HorizontalAlignment="Stretch"/>
+        <Label x:Name="LanguageSelectLabel" Content="Label" HorizontalAlignment="Left" Margin="6,140,0,0" VerticalAlignment="Top" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983" Foreground="#FFE6E6E6"/>
+        <RadioButton x:Name="LanguageSelectEnglish" Content="RadioButton" HorizontalAlignment="Left" Margin="10,164,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+        <RadioButton x:Name="LanguageSelectJapanese" Content="RadioButton" HorizontalAlignment="Left" Margin="10,184,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
     </Grid>
 </Window>

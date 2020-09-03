@@ -1,4 +1,4 @@
-0: Move;;
+﻿0: Move;;
 1: Translate;;
 2: Reading from {0}.;;
 3: No command called "{0}".;;
@@ -6,7 +6,7 @@
  {0};;
 5: Error: Translation request timed out.;;
 6: Error: Translation Failed.;;
-7: Message translated to {0}.;;
+7: Message translated to "{0}".;;
 8: Help:
 The interface consists of:
 "Output": Contains translated and non-translated chat messages and other system information.
@@ -14,9 +14,10 @@ The interface consists of:
 
 Commands:
 "/from <message>": This will translate a message from Japanese to English.
-"/jp": This will switch the program to Japanese user mode(WIP).
+"/jp": This will switch the program to Japanese user mode.
 "/search <words>": Search the Japanese word database for words based on their English meaning.
 "/help": Shows this message.
+"/searchkanji <word>": Search the Japanese word database for words based on their Kanji representation.
 ;;
 9: This command is not yet implemented.;;
 10: ;;
@@ -31,3 +32,8 @@ Commands:
 19: Enable partial transparency.;;
 20: Partial transparency minimum.;;
 21: Colour chat messages.;;
+22: Disable Clickthrough toggle.;;
+23: English;;
+24: 日本語;;
+25: User language:;;
+26: Chat Translator;;

@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatTranslator"
         mc:Ignorable="d"
-        Title="MainWindow" MinWidth="260" MinHeight="260" Height="346" Width="326" BorderThickness="0" Topmost="True" Background="#FF13293F" BorderBrush="#FF13293F" WindowStyle="None" ResizeMode="CanResize" Loaded="Window_Loaded" AllowsTransparency="True" SnapsToDevicePixels="True">
+        Title="MainWindow" MinWidth="260" MinHeight="260" Height="346" Width="326" BorderThickness="0" Topmost="True" Background="#00132C4F" BorderBrush="#FF13293F" WindowStyle="None" ResizeMode="CanResize" Loaded="Window_Loaded" AllowsTransparency="True" SnapsToDevicePixels="True">
     <Window.Resources>
         <ControlTemplate x:Key="ScrollBarControlTemplate1" TargetType="{x:Type ScrollBar}">
             <Grid x:Name="Bg" SnapsToDevicePixels="True">
@@ -126,17 +126,13 @@
                                                         <Setter Property="Background" Value="#FF10243A"/>
                                                         <Setter Property="BorderBrush"  Value="#FF10243A"/>
                                                     </Trigger>
-                                                    <Trigger Property="IsEnabled" Value="False">
-                                                        <Setter Property="Background" Value="#FF10243A"/>
-                                                        <Setter Property="BorderBrush" Value="#FF10243A"/>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="{DynamicResource ScrollHighlightColour}"/>
+                                                        <Setter Property="BorderBrush"  Value="{DynamicResource ScrollHighlightColour}"/>
                                                     </Trigger>
                                                     <Trigger Property="IsDragging" Value="False">
                                                         <Setter Property="Background" Value="#FF10243A"/>
                                                         <Setter Property="BorderBrush"  Value="#FF10243A"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsEnabled" Value="True">
-                                                        <Setter Property="Background" Value="#FF10243A"/>
-                                                        <Setter Property="BorderBrush" Value="#FF10243A"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -240,25 +236,32 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
         <sys:Double x:Key="ScrollOpacity">1</sys:Double>
+        <SolidColorBrush x:Key="BaseColour" Color="#FF132648"></SolidColorBrush>
+        <SolidColorBrush x:Key="HighlightColour" Color="#FF244464"></SolidColorBrush>
+        <SolidColorBrush x:Key="ScrollHighlightColour" Color="#FF264678"></SolidColorBrush>
+        <SolidColorBrush x:Key="SubsectionColour" Color="#FF0B1B2F"></SolidColorBrush>
+        <SolidColorBrush x:Key="TextColour" Color="#FFE6E6E6"></SolidColorBrush>
     </Window.Resources>
     <WindowChrome.WindowChrome>
         <WindowChrome 
         CaptionHeight="0"
         ResizeBorderThickness="6" />
     </WindowChrome.WindowChrome>
-    <Grid x:Name="MainGrid" Canvas.Left="0" Canvas.Top="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <Canvas Name="SettingsButtonBackground" HorizontalAlignment="Left" MinHeight="32" Margin="4,4,0,0" VerticalAlignment="Top" MinWidth="32" Background="#FF244464"/>
+    <Grid x:Name="MainGrid" Canvas.Left="0" Canvas.Top="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background ="{DynamicResource BaseColour}">
+        <Canvas Name="SettingsButtonBackground" HorizontalAlignment="Left" MinHeight="32" Margin="4,4,0,0" VerticalAlignment="Top" MinWidth="32" Background="{DynamicResource HighlightColour}"/>
         <Canvas Name="SettingsButton" HorizontalAlignment="Left" MinHeight="32" Margin="4,4,0,0" VerticalAlignment="Top" MinWidth="32"/>
         <Canvas Name="MoveButton" MinHeight="32" Margin="36,4,136,0" VerticalAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Disabled" Cursor="SizeAll" Background="#00000000"/>
-        <Canvas x:Name="ClickThroughButtonBackground" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" Margin="0,4,100,0" MinWidth="32" Background="#FF244464" Opacity="0"/>
-        <Canvas x:Name="ClickThroughButton" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" Margin="0,4,100,0" MinWidth="32"/>
-        <Canvas x:Name="AutoScrollButtonBackground" HorizontalAlignment="Right" MinHeight="32" Margin="0,4,68,0" VerticalAlignment="Top" MinWidth="32" Background="#FF244464"/>
-        <Canvas x:Name="AutoScrollButton" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Margin="0,4,68,0"/>
-        <Canvas x:Name="AutoShowButtonBackground" HorizontalAlignment="Right" Margin="0,4,36,0" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Background="#FF244464"/>
-        <Canvas x:Name="AutoShowButton" HorizontalAlignment="Right" MinHeight="32" Margin="0,4,36,0" VerticalAlignment="Top" MinWidth="32"/>
-        <Canvas x:Name="CloseButtonBackground" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Background="#FF244464" Margin="0,4,4,0"/>
+        <Canvas x:Name="ClickThroughButtonBackground" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" Margin="0,4,132,0" MinWidth="32" Background="#FF244464" Opacity="0"/>
+        <Canvas x:Name="ClickThroughButton" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" Margin="0,4,132,0" MinWidth="32"/>
+        <Canvas x:Name="AutoScrollButtonBackground" HorizontalAlignment="Right" MinHeight="32" Margin="0,4,100,0" VerticalAlignment="Top" MinWidth="32" Background="{DynamicResource HighlightColour}"/>
+        <Canvas x:Name="AutoScrollButton" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Margin="0,4,100,0"/>
+        <Canvas x:Name="AutoShowButtonBackground" HorizontalAlignment="Right" Margin="0,4,68,0" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Background="{DynamicResource HighlightColour}"/>
+        <Canvas x:Name="AutoShowButton" HorizontalAlignment="Right" MinHeight="32" Margin="0,4,68,0" VerticalAlignment="Top" MinWidth="32"/>
+        <Canvas x:Name="MinimiseButtonBackground" HorizontalAlignment="Right" Margin="0,4,36,0" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Background="{DynamicResource HighlightColour}"/>
+        <Canvas x:Name="MinimiseButton" HorizontalAlignment="Right" MinHeight="32" Margin="0,4,36,0" VerticalAlignment="Top" MinWidth="32"/>
+        <Canvas x:Name="CloseButtonBackground" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Background="{DynamicResource HighlightColour}" Margin="0,4,4,0"/>
         <Canvas x:Name="CloseButton" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Margin="0,4,4,0" HorizontalAlignment="Right"/>
-        <DockPanel x:Name="OutputDock" LastChildFill="True" Margin="4,40,4,92" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF0C1D2C">
+        <DockPanel x:Name="OutputDock" LastChildFill="True" Margin="4,40,4,92" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{DynamicResource SubsectionColour}">
             <RichTextBox x:Name="Output" DockPanel.Dock="Top" Margin="4,4,4,4" Background="{x:Null}" BorderThickness="0" FontFamily="Arial" IsReadOnly="True" VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="True" BorderBrush="{x:Null}" Foreground="#FFE6E6E6" FontSize="16" VerticalScrollBarVisibility="Visible">
 
                 <RichTextBox.Resources>
@@ -276,8 +279,8 @@
                 </RichTextBox.Effect>
             </RichTextBox>
         </DockPanel>
-        <DockPanel x:Name="InputDock" Margin="4,4,4,4" LastChildFill="True" Canvas.Left="8" Canvas.Top="256" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="#FF0C1D2C" Height="84">
-            <TextBox x:Name="Input" DockPanel.Dock="Top" Margin="4,4,4,4" Background="{x:Null}" BorderThickness="0" FontFamily="Arial" FontSize="14" BorderBrush="{x:Null}" Foreground="#FFE6E6E6" CaretBrush="#FFE6E6E6"/>
+        <DockPanel x:Name="InputDock" Margin="4,4,4,4" LastChildFill="True" Canvas.Left="8" Canvas.Top="256" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="{DynamicResource SubsectionColour}" Height="84">
+            <TextBox x:Name="Input" DockPanel.Dock="Top" TextWrapping="Wrap" AcceptsTab="True" SpellCheck.IsEnabled="True" Margin="4,4,4,4" Background="{x:Null}" BorderThickness="0" FontFamily="Arial" FontSize="14" BorderBrush="{x:Null}" Foreground="#FFE6E6E6" CaretBrush="#FFE6E6E6"/>
         </DockPanel>
     </Grid>
 </Window>

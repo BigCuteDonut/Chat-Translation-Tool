@@ -19,13 +19,14 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using TranslateTool.Properties;
 
 namespace TranslateTool
 {
     public class Language
     {
         public readonly bool IsJapanese;
-        public string[] Text { get; private set; } = new string[32];
+        public string[] Text { get; private set; } = new string[48];
 
         //Probably should redesign the layout of the language file, it's kinda dumb.
         public Language(string languageCode, string version)
@@ -38,20 +39,43 @@ namespace TranslateTool
             var messageIndex = 0;
             var lastChar = '\0';
             var messageBuilder = new StringBuilder();
+            var settingValue = Settings.Default.Language;
 
+            if (languageCode == string.Empty)
+            {
+                if (settingValue != "None")
+                {
+                    if (settingValue == "Japanese")
+                    {
+                        languageCode = "ja";
+                    }
+                    else if (settingValue == "English")
+                    {
+                        languageCode = "en";
+                    }
+                }
+                else
+                {
+                    languageCode = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+                }
+            }
+           
             if (languageCode == "ja")
             {
                 fileName = "Japanese.txt";
                 IsJapanese = true;
                 Text[11] = $"バグや問題点の報告は、Twitterの@CuteDonut3か、PSO2のBreadButterflyまでご連絡ください。このプログラムを開発している人は日本語を書くのが苦手なのでご注意ください。また、言語の修正を報告していただいても構いません。\n\nVer. {version}.";
+                Settings.Default.Language = "Japanese";
+                Settings.Default.Save();
             }
             else
             {
                 fileName = "English.txt";
                 IsJapanese = false;
                 Text[11] = $"Please contact @CuteDonut on Twitter or BreadButterfly in-game(PSO2) to report bugs/issues. \n\nVersion {version}.";
+                Settings.Default.Language = "English";
+                Settings.Default.Save();
             }
-
             fileText = File.ReadAllText(Environment.CurrentDirectory + $@"\Language\{fileName}");
 
             foreach (var chr in fileText)
@@ -113,7 +137,7 @@ namespace TranslateTool
             }
         }
 
-        public Language(string version) : this(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, version)
+        public Language(string version) : this("", version)
         {
         }
 

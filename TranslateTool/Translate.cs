@@ -29,6 +29,12 @@ using System.Threading.Tasks;
 
 namespace TranslateTool
 {
+    public enum NotifyType
+    {
+        None,
+        SelectLanguage,
+        FolderMissing
+    }
     public static class Translate
     {
         private static string DLEval = "document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__inner_textarea_container > textarea\").value";
@@ -75,11 +81,23 @@ namespace TranslateTool
 
             Command.Add(true, CommandRETRY, "retry", "re", "r");
             Command.Add(true, CommandEN, "en", "english");
-            Command.Add(true, CommandJP, "jp", "japanese");
+            Command.Add(true, CommandJP, "jp", "japanese", "ni");
             Command.Add(true, CommandHELP, "help", "h");
             Command.Add(true, CommandFROM, "from", "f");
             Command.Add(false, CommandSEARCH, "search", "find", "s");
             Command.Add(true, CommandSEARCHKANJI, "searchkanji", "sk", "findkanji");
+        }
+
+        private static void SleepUntil(Func<bool> predicate)
+        {
+            while(true)
+            {
+                if(predicate() || closeWatchStop)
+                {
+                    return;
+                }
+                Thread.Sleep(50);
+            }
         }
 
         public static bool LoadFile()
@@ -142,20 +160,8 @@ namespace TranslateTool
             browserThread.Start();
         }
 
-        public static void StopBrowsers()
+        public static void Stop()
         {
-            while (translateFromBrowsers.Count < instanceCount)
-            {
-                Thread.Sleep(50);
-            }
-
-            while (translateFromBrowsers.Count > 0)
-            {
-                var browser = translateFromBrowsers.Pop();
-
-                browser.Page.Dispose();
-            }
-            translateToBrowser.Page.Dispose();
             closeWatchStop = true;
         }
 
@@ -517,22 +523,21 @@ namespace TranslateTool
         private static async Task<string> TranslateFrom(string text)
         {
             string link;
+            var eval = DLEval;
 
             if (Language.IsJapanese)
             {
-                link = "https://www.deepl.com/translator#en/ja/";
+                eval = GGLEval;
+                link = "https://translate.google.com/#view=home&op=translate&sl=en&tl=ja&text=";
             }
             else
             {
                 link = "https://www.deepl.com/translator#ja/en/";
             }
 
-            while (translateFromBrowsers.Count == 0)
-            {
-                Thread.Sleep(50);
-            }
+            SleepUntil(() => translateFromBrowsers.Count > 0);
             var browser = translateFromBrowsers.Pop();
-            var result = await TranslateAny(browser, link, DLEval, text);
+            var result = await TranslateAny(browser, link, eval, text);
 
             translateFromBrowsers.Push(browser);
 
@@ -564,10 +569,7 @@ namespace TranslateTool
                 }
             }
 
-            while (translateToBusy)
-            {
-                Thread.Sleep(50);
-            }
+            SleepUntil(() => !translateToBusy);
             translateToBusy = true;
 
             var result = await TranslateAny(translateToBrowser, link, eval, text);
@@ -626,10 +628,7 @@ namespace TranslateTool
         {
             if (package.Type < 100 && package.Type > 0)
             {
-                while (translateFromBrowsers.Count == 0)
-                {
-                    Thread.Sleep(50);
-                }
+                SleepUntil(() => translateFromBrowsers.Count > 0);
                 if (package.Type == PackageTypes.TranslateChat)
                 {
                     ProcessTranslateChat(package);

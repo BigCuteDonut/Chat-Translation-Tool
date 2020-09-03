@@ -35,7 +35,7 @@ namespace ChatTranslator
             var settingsWindow = new SettingsWindow();
             Logic = new MainWindowLogic();
 
-            Logic.Load(windowInteropHelper.Handle,this,settingsWindow, (Grid)FindName("MainGrid"), (DockPanel)FindName("OutputDock"), (DockPanel)FindName("InputDock"), (Canvas)FindName("ClickThroughButton"), (Canvas)FindName("AutoShowButton"), (Canvas)FindName("AutoScrollButton"), (Canvas)FindName("SettingsButton"), (Canvas)FindName("CloseButton"), (Canvas)FindName("AutoShowButtonBackground"), (Canvas)FindName("AutoScrollButtonBackground"), (Canvas)FindName("SettingsButtonBackground"), (Canvas)FindName("CloseButtonBackground"), (Canvas)FindName("MoveButton"), (RichTextBox)FindName("Output"), (TextBox)FindName("Input"), (CheckBox)settingsWindow.FindName("PreventTransparencyCheck"), (CheckBox)settingsWindow.FindName("ShowAdditionalInfoCheck"), (CheckBox)settingsWindow.FindName("PartialTransparencyCheck"), (CheckBox)settingsWindow.FindName("ColourChatMessagesCheck"));
+            Logic.Load(windowInteropHelper.Handle, this, settingsWindow, MainGrid, OutputDock, InputDock, ClickThroughButton, AutoShowButton, AutoScrollButton, SettingsButton, CloseButton, AutoShowButtonBackground, AutoScrollButtonBackground, SettingsButtonBackground, CloseButtonBackground, MoveButton, MinimiseButton, MinimiseButtonBackground, Output, Input, settingsWindow.PreventTransparencyCheck, settingsWindow.ShowAdditionalInfoCheck, settingsWindow.PartialTransparencyCheck, settingsWindow.ColourChatMessagesCheck, settingsWindow.DisableClickthroughCheck, settingsWindow.LanguageSelectLabel, settingsWindow.LanguageSelectEnglish, settingsWindow.LanguageSelectJapanese);
         }
 
         private void Style_Scroll(object sender, ScrollEventArgs e)
