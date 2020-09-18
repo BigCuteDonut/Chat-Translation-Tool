@@ -528,7 +528,6 @@ namespace TranslateTool
         {
             Settings.Default.ColourChatMessages = false;
             Settings.Default.Save();
-            RegisterHotKey(MainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
             Translate.DisableColourChat();
         }
 
@@ -549,6 +548,7 @@ namespace TranslateTool
         {
             Settings.Default.DisableClickThrough = false;
             DisableClickthroughToggle = false;
+            RegisterHotKey(MainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
             Settings.Default.Save();
         }
 
