@@ -401,6 +401,7 @@ namespace TranslateTool
             DisableCloseHighlight();
             DisableMinimiseHighlight();
             ApplySettings();
+            MainWindowHandle = mainWindowHandle;
             RegisterHotKey(mainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
             ApplyTranslation(new Language(VersionNumber));
             MainWindow.Closing += WindowClosing;
