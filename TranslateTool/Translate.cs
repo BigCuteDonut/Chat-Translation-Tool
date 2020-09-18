@@ -488,30 +488,46 @@ namespace TranslateTool
             ThreadPool.QueueUserWorkItem((state) =>
             {
                 var (completionSource, targetBrowser, textValue) = ((TaskCompletionSource<string>, Browser, string))state;
+                var timeout = 8000;
 
                 if (targetBrowser.AsyncOpenUrl(url + Uri.EscapeDataString(textValue.Replace("/", "\u2215"))).GetAwaiter().GetResult())
                 {
                     targetBrowser.PageInitialize();
                     while (true)
                     {
-                        var result = targetBrowser.Page.EvaluateScriptAsync(eval).GetAwaiter().GetResult().Result.ToString();
-                        var timeout = 8000;
+                        var response = targetBrowser.Page.EvaluateScriptAsync(eval).GetAwaiter().GetResult();
 
-                        if (result == "")
+                        if (response.Result == null)
                         {
                             Thread.Sleep(50);
                             timeout -= 50;
 
                             if (timeout <= 0)
                             {
-                                taskCompletion.SetResult(result);
+                                taskCompletion.SetResult(text);
                                 break;
                             }
                         }
                         else
                         {
-                            completionSource.SetResult(result);
-                            break;
+                            var result = response.Result.ToString();
+
+                            if (result == "")
+                            {
+                                Thread.Sleep(50);
+                                timeout -= 50;
+
+                                if (timeout <= 0)
+                                {
+                                    taskCompletion.SetResult(result);
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                completionSource.SetResult(result);
+                                break;
+                            }
                         }
                     }
                 }

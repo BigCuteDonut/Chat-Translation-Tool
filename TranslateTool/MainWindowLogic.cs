@@ -320,6 +320,7 @@ namespace TranslateTool
             }
             else
             {
+                RegisterHotKey(MainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
                 DisableClickthroughCheck.IsChecked = false;
                 DisableClickthroughToggle = false;
             }
@@ -356,6 +357,7 @@ namespace TranslateTool
             var dpiYProperty = typeof(SystemParameters).GetProperty("Dpi", BindingFlags.NonPublic | BindingFlags.Static);
             var h = HwndSource.FromVisual(mainWindow) as HwndSource;
 
+            MainWindowHandle = mainWindowHandle;
             BackgroundColor = ((SolidColorBrush)mainWindow.Resources["BaseColour"]).Color;
             TextBackgroundColor = ((SolidColorBrush)mainWindow.Resources["SubsectionColour"]).Color;
             TextColor = ((SolidColorBrush)mainWindow.Resources["TextColour"]).Color;
@@ -401,8 +403,6 @@ namespace TranslateTool
             DisableCloseHighlight();
             DisableMinimiseHighlight();
             ApplySettings();
-            MainWindowHandle = mainWindowHandle;
-            RegisterHotKey(mainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
             ApplyTranslation(new Language(VersionNumber));
             MainWindow.Closing += WindowClosing;
             MainWindow.Closed += WindowClosed;
