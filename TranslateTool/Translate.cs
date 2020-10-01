@@ -18,9 +18,11 @@
 using CefSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.AccessControl;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -90,9 +92,9 @@ namespace TranslateTool
 
         private static void SleepUntil(Func<bool> predicate)
         {
-            while(true)
+            while (true)
             {
-                if(predicate() || closeWatchStop)
+                if (predicate() || closeWatchStop)
                 {
                     return;
                 }
@@ -129,7 +131,7 @@ namespace TranslateTool
                         file = null;
                     }
                     file = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    mainWindow.WriteLine(string.Format(Language.Text[2], fileName));
+                    mainWindow.WriteLine(Language.Text[2]);
                     file.Position = lastFileLength;
 
                     return true;
@@ -190,7 +192,7 @@ namespace TranslateTool
         private static void HandleChatMessage(string name, string message, string type)
         {
             var translated = false;
-            object colour = messageColour;
+            var colour = messageColour;
 
             message = RemoveCommand(message);
 
@@ -224,7 +226,7 @@ namespace TranslateTool
             }
             else
             {
-                colour = null;
+                colour = MainWindowLogic.TextColor;
             }
 
             foreach (var chr in message)
@@ -313,7 +315,7 @@ namespace TranslateTool
                 {
                     hinter = new Hinter();
                 }
-                mainWindow.WriteLine(hinter.FindWordsByMeaning(args.ToList()));
+                mainWindow.WriteLine(hinter.FindWordsByMeaning(string.Join(" ",args)));
                 mainWindow.SetInputValue($"");
             }
         }
@@ -326,7 +328,7 @@ namespace TranslateTool
                 {
                     hinter = new Hinter();
                 }
-                mainWindow.WriteLine(hinter.FindWordsByKanji(args[0]));
+                mainWindow.WriteLine(hinter.FindWords(args[0]));
                 mainWindow.SetInputValue($"");
             }
         }
@@ -608,6 +610,7 @@ namespace TranslateTool
         private static async void ProcessTranslateInputFrom(DataPackage package)
         {
             package.Type = PackageTypes.Operating;
+            package.DelayHandler = new DelayHandler(mainWindow);
 
             var result = await TranslateFrom(package.Text);
 
@@ -625,8 +628,12 @@ namespace TranslateTool
             package.Type = PackageTypes.TranslatedInput;
             retryCount = 0;
 
-            var confirmResult = await TranslateFrom(result);
             var confirmPackage = data.AddPackage();
+
+            confirmPackage.Type = PackageTypes.Operating;
+            confirmPackage.DelayHandler = new DelayHandler(mainWindow);
+
+            var confirmResult = await TranslateFrom(result);
 
             confirmPackage.Text = confirmResult;
             confirmPackage.Type = PackageTypes.TranslatedInputConfirmation;
@@ -661,12 +668,12 @@ namespace TranslateTool
         }
 
         //Idea: Could include previous messages to translate to give the translator more context. \n{infuo}\n seems to be a marker that survives translation. It could be used as a separator.
-        public static void TranslateChat(string name, string text, object color)
+        public static void TranslateChat(string name, string text, System.Windows.Media.Color color)
         {
             var data = Translate.data.AddPackage();
 
             data.SetTextLimited(text);
-            data.Color = color;
+            data.DelayHandler = new DelayHandler(mainWindow, color);
             data.Name = name;
             data.Type = PackageTypes.TranslateChat;
         }
@@ -683,14 +690,7 @@ namespace TranslateTool
             {
                 outputText = $"{package.Name}:\r\n{package.Text}";
             }
-            if (package.Color == null)
-            {
-                mainWindow.WriteLine(outputText);
-            }
-            else
-            {
-                mainWindow.WriteLine(outputText, (System.Windows.Media.Color)package.Color);
-            }
+            package.DelayHandler.Resolve(outputText);
             package.Clear();
         }
 
@@ -700,6 +700,7 @@ namespace TranslateTool
 
             data.Type = PackageTypes.TranslateInputTo;
             data.Text = text;
+            data.DelayHandler = new DelayHandler(mainWindow);
         }
 
         public static void ProcessTranslatedInput(DataPackage package)
@@ -708,7 +709,7 @@ namespace TranslateTool
             var action = new Action(() => System.Windows.Clipboard.SetText(text));
 
             mainWindow.Invoke(action);
-            mainWindow.WriteLine(string.Format(Language.Text[7], text));
+            package.DelayHandler.Resolve(string.Format(Language.Text[7], text));
             package.Clear();
         }
 
@@ -726,7 +727,7 @@ namespace TranslateTool
 
         public static void ProcessTranslatedInputConfirmation(DataPackage package)
         {
-            mainWindow.WriteLine($"({package.Text})");
+            package.DelayHandler.Resolve($"({package.Text})");
             package.Clear();
         }
 
@@ -734,6 +735,7 @@ namespace TranslateTool
         {
             var data = Translate.data.AddPackage();
 
+            data.DelayHandler = new DelayHandler(mainWindow);
             data.Type = PackageTypes.TranslateInputFrom;
             data.Text = text;
         }

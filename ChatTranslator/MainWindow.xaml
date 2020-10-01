@@ -272,7 +272,6 @@
                         <Setter Property="Template" Value="{DynamicResource ScrollBarControlTemplate1}"/>
                         <Setter Property="Opacity" Value="{DynamicResource ScrollOpacity}"/>
                     </Style>
-
                 </RichTextBox.Resources>
                 <RichTextBox.Effect>
                     <DropShadowEffect ShadowDepth="0" Opacity="0.9"/>

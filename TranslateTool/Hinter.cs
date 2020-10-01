@@ -18,74 +18,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace TranslateTool
 {
-    class SimpleDictionary
-    {
-        public List<char> Keys = new List<char>();
-        public List<SortedItem> Values = new List<SortedItem>();
-
-        public SortedItem this[char chr]
-        {
-            get
-            {
-                var index = 0;
-
-                foreach (var key in Keys)
-                {
-                    if (key == chr)
-                    {
-                        return Values[index];
-                    }
-                    index++;
-                }
-
-                return null;
-            }
-            set
-            {
-                var index = Keys.IndexOf(chr);
-
-                if (index >= 0)
-                {
-                    Values[index] = value;
-                }
-                else
-                {
-                    Keys.Add(chr);
-                    Values.Add(value);
-                }
-            }
-        }
-
-        public bool TryGetValue(char key, out SortedItem item)
-        {
-            item = this[key];
-
-            if (item != null)
-            {
-                return true;
-            }
-
-            return false;
-        }
-    }
-    class Entry
-    {
-        public string WithKanji;
-        public string Reading;
-        public string Meaning;
-    }
-    class SortedItem
-    {
-        public Entry Result;
-        public SimpleDictionary Next;
-    }
     class Hinter
     {
-        private SimpleDictionary _database;
+        private List<Word> _database;
         private Dictionary<string, string> kanaConvert;
         private byte[] fileBytes;
 
@@ -111,43 +51,24 @@ namespace TranslateTool
             kanaConvert["\u30c1\u30e5"] = "chu";
             kanaConvert["\u30c1\u30e7"] = "cho";
             kanaConvert["\u3064"] = "tsu";
-            kanaConvert["\u3063"] = "tsu";
             kanaConvert["\u3061"] = "chi";
-            kanaConvert["\u3060"] = "chi";
             kanaConvert["\u3057"] = "shi";
-            kanaConvert["\u3056"] = "shi";
             kanaConvert["\u3058"] = "ji";
-            kanaConvert["\u3057"] = "ji";
             kanaConvert["\u30C4"] = "tsu";
-            kanaConvert["\u30C3"] = "tsu";
             kanaConvert["\u30c1"] = "chi";
-            kanaConvert["\u30c0"] = "chi";
             kanaConvert["\u30b7"] = "shi";
-            kanaConvert["\u30b6"] = "shi";
             kanaConvert["\u30b8"] = "ji";
-            kanaConvert["\u30b7"] = "ji";
             kanaConvert["\u3084"] = "ya";
-            kanaConvert["\u3083"] = "ya";
             kanaConvert["\u3086"] = "yu";
-            kanaConvert["\u3085"] = "yu";
             kanaConvert["\u3088"] = "yo";
-            kanaConvert["\u3087"] = "yo";
             kanaConvert["\u30e4"] = "ya";
-            kanaConvert["\u30e3"] = "ya";
             kanaConvert["\u30e6"] = "yu";
-            kanaConvert["\u30e5"] = "yu";
             kanaConvert["\u30e8"] = "yo";
-            kanaConvert["\u30e7"] = "yo";
             kanaConvert["\u3042"] = "a";
-            kanaConvert["\u3041"] = "a";
             kanaConvert["\u3048"] = "e";
-            kanaConvert["\u3047"] = "e";
             kanaConvert["\u3044"] = "i";
-            kanaConvert["\u3043"] = "i";
             kanaConvert["\u304A"] = "o";
-            kanaConvert["\u3049"] = "o";
             kanaConvert["\u3046"] = "u";
-            kanaConvert["\u3045"] = "u";
             kanaConvert["\u304B"] = "ka";
             kanaConvert["\u3051"] = "ke";
             kanaConvert["\u304F"] = "ku";
@@ -231,15 +152,10 @@ namespace TranslateTool
             kanaConvert["\u30d3"] = "bi";
             kanaConvert["\u30dc"] = "bo";
             kanaConvert["\u30a2"] = "a";
-            kanaConvert["\u30a1"] = "a";
             kanaConvert["\u30a8"] = "e";
-            kanaConvert["\u30a7"] = "e";
             kanaConvert["\u30a6"] = "u";
-            kanaConvert["\u30a5"] = "u";
             kanaConvert["\u30a4"] = "i";
-            kanaConvert["\u30a3"] = "i";
             kanaConvert["\u30aa"] = "o";
-            kanaConvert["\u30a9"] = "o";
             kanaConvert["\u30de"] = "ma";
             kanaConvert["\u30e1"] = "me";
             kanaConvert["\u30e0"] = "mu";
@@ -270,12 +186,14 @@ namespace TranslateTool
             kanaConvert["セ"] = "se";
             kanaConvert["ス"] = "su";
             kanaConvert["ソ"] = "so";
+            kanaConvert["ぞ"] = "zo";
+            kanaConvert["ゾ"] = "zo";
             kanaConvert["\u30f3"] = "n";
 
             fileBytes = File.ReadAllBytes("WordDatabase.bin");
             var index = 0;
 
-            _database = ReverseProcess(ref index);
+            _database = WordDatabase.Deserialise();
             fileBytes = null;
         }
         private string HintKana(string kana)
@@ -317,294 +235,196 @@ namespace TranslateTool
             }
             return finalResult;
         }
-        private List<Entry> SubSearchKanji(SortedItem current, string input)
+
+        public string FindWords(string input)
         {
-            var results = new List<Entry>();
-            var matched = true;
+            var foundWords = new List<Word>();
+            var result = "";
 
-            if (current.Result != null)
+            foreach (var word in _database)
             {
-                if (current.Result.WithKanji != string.Empty)
+                if (word.ToString().Contains(input))
                 {
-                    var check = current.Result.WithKanji;
-
-                    if (!check.Contains(input))
-                    {
-                        matched = false;
-                    }
-                    if (matched)
-                    {
-                        results.Add(current.Result);
-                    }
+                    foundWords.Add(word);
                 }
             }
-            foreach (var value in current.Next.Values)
+            foundWords.OrderBy((a) => { return a.ToString().Length; });
+
+            for (var i = 0; i < 15; i++)
             {
-                results.AddRange(SubSearchKanji(value, input));
-            }
-            return results;
-        }
-
-        public List<Entry> SearchKanji(string input)
-        {
-            var results = new List<Entry>();
-
-            foreach (var value in _database.Values)
-            {
-                results.AddRange(SubSearchKanji(value, input));
-            }
-
-            return results;
-        }
-
-        public string FindWordsByKanji(string input)
-        {
-            var result = "";
-            var i = 0;
-            var searchResult = SearchKanji(input);
-
-            searchResult.Sort((a, b) => { return a.WithKanji.Length - b.WithKanji.Length; });
-
-            foreach (var entry in searchResult)
-            {
-                result += $"{entry.WithKanji} ({entry.Reading}|{HintKana(entry.Reading)}):{entry.Meaning}\r\n";
-
-                if (i++ == 10)
+                if (i >= foundWords.Count)
                 {
                     break;
                 }
+                result += $"{HintWord(foundWords[i])}\r\n";
             }
 
-            return result;
+            return result.TrimEnd('\n').TrimEnd('\r');
         }
 
-        private List<Entry> SubSearchMeaning(SortedItem current, List<string> input)
+        public string FindWordsByMeaning(string input)
         {
-            var results = new List<Entry>();
-            var matched = true;
-
-            if (current.Result != null)
-            {
-                if (current.Result.Meaning.Length < 60 && current.Result.Meaning.Length > 0)
-                {
-                    var check = " " + current.Result.Meaning.ToLower() + " ";
-
-                    for (int i = 0, l = input.Count; i < l; i++)
-                    {
-                        if (!check.Contains(" " + input[i] + " "))
-                        {
-                            matched = false;
-                        }
-                    }
-                    if (matched)
-                    {
-                        results.Add(current.Result);
-                    }
-                }
-            }
-            foreach (var value in current.Next.Values)
-            {
-                results.AddRange(SubSearchMeaning(value, input));
-            }
-            return results;
-        }
-
-        public List<Entry> SearchMeaning(List<string> input)
-        {
-            var results = new List<Entry>();
-
-            for (int i = 0, l = input.Count; i < l; i++)
-            {
-                input[i] = input[i].ToLower();
-            }
-
-            foreach (var value in _database.Values)
-            {
-                results.AddRange(SubSearchMeaning(value, input));
-            }
-
-            return results;
-        }
-
-        public string FindWordsByMeaning(List<string> input)
-        {
+            var foundWords = new List<(Word, string)>();
             var result = "";
-            var i = 0;
-            var searchResult = SearchMeaning(input);
 
-            searchResult.Sort((a, b) => { return a.Meaning.Length - b.Meaning.Length; });
-
-            foreach (var entry in searchResult)
+            foreach (var word in _database)
             {
-                if ((entry.WithKanji ?? "").Length > 0)
+                foreach (var meaning in word.Meanings)
                 {
-                    result += $"{entry.WithKanji} ({entry.Reading}|{ HintKana(entry.Reading)}):{entry.Meaning}\r\n";
-                }
-                else
-                {
-                    result += $"{entry.Reading}({HintKana(entry.Reading)}):{entry.Meaning}\r\n";
-                }
-                if (i++ == 10)
-                {
-                    break;
-                }
-            }
-
-            return result;
-        }
-
-        public (Entry Result, int Missed) FindEntryInString(string source, int startIndex)
-        {
-            Entry lastValidResult = null;
-            var current = _database;
-            var startedFrom = startIndex - 1;
-            var index = startIndex;
-            var missed = -1;
-
-            while (lastValidResult == null)
-            {
-                missed++;
-                startedFrom++;
-                index = startedFrom;
-
-                if (index >= source.Length)
-                {
-                    return (null, missed); ;
-                }
-                while (index < source.Length)
-                {
-                    if (current.TryGetValue(source[index], out SortedItem value))
+                    if ($" {meaning.ToString().TrimEnd('.')} ".ToLower().Contains($" {input.ToLower()} "))
                     {
-                        current = value.Next;
-
-                        if (value.Result != null)
-                        {
-                            lastValidResult = value.Result;
-                        }
-                    }
-                    else
-                    {
+                        foundWords.Add((word, meaning.ToString()));
                         break;
                     }
-                    index++;
                 }
             }
-            return (lastValidResult, missed);
+            foundWords.OrderBy((a) => { return a.Item2.Length; });
+
+            for (var i = 0; i < 15; i++)
+            {
+                if(i >= foundWords.Count)
+                {
+                    break;
+                }
+                result += $"{HintWordWithMeaning(foundWords[i].Item1,foundWords[i].Item2)}\r\n";
+            }
+
+            return result.TrimEnd('\n').TrimEnd('\r');
         }
 
-        public List<Entry> FindEntriesInString(string source)
+        public List<Word> FindWordsInString(string source)
         {
+            var results = new List<Word>();
+            var searchResults = new List<Word>();
+            Word lastPossibleWord = null;
+            var returnIndex = 0;
+            var searchIndex = 0;
+            var endSearch = false;
             var index = 0;
-            var results = new List<Entry>();
+
+            searchResults.AddRange(_database);
 
             while (index < source.Length)
             {
-                var entry = FindEntryInString(source, index);
+                var currentChar = source[index];
 
-                if (entry.Result != null)
+                if (Language.IsJapaneseChar(currentChar))
                 {
-                    results.Add(entry.Result);
-
-                    if ((entry.Result.WithKanji ?? "").Length > 0)
+                    searchResults.RemoveAll((word) =>
                     {
-                        index += entry.Result.WithKanji.Length + entry.Missed;
+                        var wordText = word.ToString();
+
+                        if (wordText.Length > searchIndex)
+                        {
+                            return wordText[searchIndex] != source[index];
+                        }
+                        return true;
+                    });
+
+                    if (searchResults.Count > 0)
+                    {
+                        foreach (var searchResult in searchResults)
+                        {
+                            if (searchResult.ToString().Length == searchIndex + 1)
+                            {
+                                lastPossibleWord = searchResult;
+                                returnIndex = index;
+                            }
+                        }
+                        searchIndex++;
                     }
                     else
                     {
-                        index += entry.Result.Reading.Length + entry.Missed;
+                        endSearch = true;
                     }
                 }
                 else
                 {
-                    break;
+                    endSearch = true;
                 }
+                if (endSearch)
+                {
+                    if (lastPossibleWord != null)
+                    {
+                        results.Add(lastPossibleWord);
+                        lastPossibleWord = null;
+                        index = returnIndex;
+                    }
+                    else
+                    {
+                        returnIndex = index + 1;
+                    }
+                    if (searchResults.Count < _database.Count)
+                    {
+                        searchResults.Clear();
+                        searchResults.AddRange(_database);
+                    }
+                    searchIndex = 0;
+                    endSearch = false;
+                }
+                index++;
+            }
+            if (lastPossibleWord != null)
+            {
+                results.Add(lastPossibleWord);
             }
 
             return results;
+        }
+
+        public string HintWordWithMeaning(Word input, string meaning)
+        {
+            if (input is Kanji kanji)
+            {
+                return $"{kanji} ({HintKana(kanji.ReadingList[0].ToString())}):{meaning}";
+            }
+            else if (input is Kana kana)
+            {
+                return $"{kana} ({HintKana(kana.ToString())}):{meaning}";
+            }
+            return "";
+        }
+
+        public string HintWord(Word input)
+        {
+            if (input is Kanji kanji)
+            {
+                if (kanji.ReadingList.Count > 0 && kanji.Meanings.Count > 0)
+                {
+                    return $"{kanji} ({HintKana(kanji.ReadingList[0].ToString())}):{kanji.Meanings[0]}";
+                }
+            }
+            else if (input is Kana kana)
+            {
+                if (kana.Meanings.Count > 0)
+                {
+                    return $"{kana} ({HintKana(kana.ToString())}):{kana.Meanings[0]}";
+                }
+            }
+            return "";
         }
 
         public string AddHinting(string input)
         {
-            var entries = FindEntriesInString(input);
+            var entries = FindWordsInString(input);
             var result = "";
 
             foreach (var entry in entries)
             {
-                if ((entry.WithKanji ?? "").Length > 0)
+                if (entry is Kanji kanji)
                 {
-                    result += $"{entry.WithKanji} ({entry.Reading}|{HintKana(entry.Reading)}):{entry.Meaning}\r\n";
+                    if (kanji.ReadingList.Count > 0 && kanji.Meanings.Count > 0)
+                    {
+                        result += $"{kanji} ({HintKana(kanji.ReadingList[0].ToString())}):{kanji.Meanings[0]}\r\n";
+                    }
                 }
-                else
+                else if (entry is Kana kana)
                 {
-                    result += $"{entry.Reading}({HintKana(entry.Reading)}):{entry.Meaning}\r\n";
+                    if (kana.Meanings.Count > 0)
+                    {
+                        result += $"{kana}({HintKana(kana.ToString())}):{kana.Meanings[0]}\r\n";
+                    }
                 }
-            }
-
-            return result;
-        }
-
-        ushort GetShort(ref int indexToOffset)
-        {
-            var value = BitConverter.ToUInt16(fileBytes, indexToOffset);
-
-            indexToOffset += 2;
-
-            return value;
-        }
-
-        string GetString(ref int indexToOffset)
-        {
-            var length = GetShort(ref indexToOffset);
-            var value = Encoding.UTF8.GetString(fileBytes, indexToOffset, length);
-
-            indexToOffset += length;
-
-            return value;
-        }
-
-        byte GetByte(ref int indexToOffset)
-        {
-            var value = fileBytes[indexToOffset];
-
-            indexToOffset += 1;
-
-            return value;
-        }
-
-        SortedItem ReverseProcessItem(ref int index)
-        {
-            var result = new SortedItem();
-
-            if (GetByte(ref index) == 1)
-            {
-                var entry = new Entry();
-
-                entry.WithKanji = GetString(ref index);
-                entry.Reading = GetString(ref index);
-                entry.Meaning = GetString(ref index);
-                result.Result = entry;
-            }
-            else
-            {
-                result.Result = null;
-            }
-            result.Next = ReverseProcess(ref index);
-
-            return result;
-        }
-
-        SimpleDictionary ReverseProcess(ref int index)
-        {
-            var result = new SimpleDictionary();
-            var keyCount = GetShort(ref index);
-            var keyIndex = 0;
-
-            while (keyIndex < keyCount)
-            {
-                var key = (char)GetShort(ref index);
-
-                result[key] = ReverseProcessItem(ref index);
-                keyIndex++;
             }
 
             return result;

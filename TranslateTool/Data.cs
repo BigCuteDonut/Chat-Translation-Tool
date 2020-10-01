@@ -46,18 +46,27 @@ namespace TranslateTool
             Type = -1;
             Age = 0;
             Parent = parent;
+            DelayHandler = null;
         }
 
         public short Type;
         public short Age;
-        public object Color;
         public string Name;
         public string Text;
+        public DelayHandler DelayHandler;
 
         public void Clear()
         {
             Type = PackageTypes.Finished;
             Parent.RemovePackage(this);
+
+            if(DelayHandler != null)
+            {
+                if (!DelayHandler.Finished)
+                {
+                    DelayHandler.Resolve("");
+                }
+            }
         }
 
         public void SetTextLimited(string text)

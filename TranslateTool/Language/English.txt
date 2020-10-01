@@ -1,6 +1,6 @@
 ﻿0: Move;;
 1: Translate;;
-2: Reading from {0}.;;
+2: Found newer chat log.;;
 3: No command called "{0}".;;
 4: Translation:
  {0};;

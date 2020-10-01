@@ -35,6 +35,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Windows.Controls.Primitives;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using System.Windows.Media.TextFormatting;
 
 namespace TranslateTool
 {
@@ -73,10 +75,12 @@ namespace TranslateTool
         private bool enabled = false;
         private Window window;
         private Stopwatch stopwatch;
+        public int precision = 16;
         public event EventHandler<TickEventArgs> Tick;
 
-        public Timer(Window window, Action<object, TickEventArgs> action)
+        public Timer(Window window, int precision, Action<object, TickEventArgs> action)
         {
+            this.precision = precision;
             this.window = window;
             stopwatch = new Stopwatch();
             Tick = new EventHandler<TickEventArgs>(action);
@@ -88,10 +92,10 @@ namespace TranslateTool
             while (enabled)
             {
                 stopwatch.Stop();
-                window.Dispatcher.Invoke(() => { Tick.Invoke(this, new TickEventArgs((double)stopwatch.ElapsedTicks / 10000 / 1000)); });
+                window.Dispatcher.Invoke(() => { Tick.Invoke(this, new TickEventArgs((double)stopwatch.ElapsedTicks / 10000000)); });
                 stopwatch.Reset();
                 stopwatch.Start();
-                Thread.Sleep(16);
+                Thread.Sleep(precision);
             }
         }
 
@@ -106,6 +110,90 @@ namespace TranslateTool
             enabled = false;
         }
     }
+    public class DelayHandler
+    {
+        private static List<DelayHandler> activeInstances = new List<DelayHandler>();
+
+        public static void Stop()
+        {
+            foreach (var instance in activeInstances)
+            {
+                instance.timer.Stop();
+            }
+        }
+
+        private MainWindowLogic window;
+        private System.Windows.Controls.Image image;
+        private InlineUIContainer imageContainer;
+        private Paragraph paragraph;
+        private Timer timer;
+        private int imageIndex;
+        private double frameDelay;
+        System.Windows.Media.Color textColor;
+
+        public bool Finished { get; private set; } = false;
+
+        public DelayHandler(MainWindowLogic window, System.Windows.Media.Color color)
+        {
+            window.Invoke(() =>
+            {
+                this.window = window;
+                textColor = color;
+                image = new System.Windows.Controls.Image();
+                imageContainer = new InlineUIContainer();
+                paragraph = window.Output.Document.Blocks.LastBlock as Paragraph;
+                image.Source = ImageResources.Loading[0].ImageSource;
+                image.MaxHeight = 22;
+                image.MaxWidth = 22;
+                imageContainer.Child = image;
+                paragraph.Inlines.Add(imageContainer);
+                frameDelay = 0.1;
+                imageIndex = 1;
+                window.Output.AppendText("\r\n");
+
+                var timer = new Timer(window.MainWindow, 50, (e, args) =>
+                {
+                    frameDelay -= args.SecondsPassed;
+
+                    if (frameDelay <= 0)
+                    {
+                        frameDelay = 0.1;
+                        image.Source = ImageResources.Loading[imageIndex++].ImageSource;
+                        if (imageIndex > 7)
+                        {
+                            imageIndex = 0;
+                        }
+                    }
+                });
+                this.timer = timer;
+                timer.Start();
+                if(window.AutoScrollEnabled)
+                {
+                    window.Output.ScrollToEnd();
+                }
+            });
+        }
+
+        public DelayHandler(MainWindowLogic window) : this(window, MainWindowLogic.TextColor)
+        {
+
+        }
+
+        public void Resolve(string text)
+        {
+            window.Invoke(() =>
+            {
+                //paragraph.Inlines.Remove(imageContainer);
+                //imageContainer.Child = null;
+                var textRange = new TextRange(imageContainer.ContentStart, imageContainer.ContentEnd);
+                window.UpdateTextSpan(text, textRange, textColor);
+            });
+            timer.Stop();
+            Finished = true;
+        }
+
+
+    }
     public static class ImageResources
     {
         public static ImageBrush ClickThrough = new ImageBrush(BitmapToImageSource(Resources.ClickThrough));
@@ -117,6 +205,19 @@ namespace TranslateTool
         public static ImageBrush AutoShowDisabled = new ImageBrush(BitmapToImageSource(Resources.AutoShowDisabled));
         public static ImageBrush AutoScrollDisabled = new ImageBrush(BitmapToImageSource(Resources.AutoScrollDisabled));
         public static ImageBrush Minimise = new ImageBrush(BitmapToImageSource(Resources.Minimise));
+        public static ImageBrush[] Loading = new ImageBrush[8];
+
+        static ImageResources()
+        {
+            Loading[0] = new ImageBrush(BitmapToImageSource(Resources.loading1));
+            Loading[1] = new ImageBrush(BitmapToImageSource(Resources.loading2));
+            Loading[2] = new ImageBrush(BitmapToImageSource(Resources.loading3));
+            Loading[3] = new ImageBrush(BitmapToImageSource(Resources.loading4));
+            Loading[4] = new ImageBrush(BitmapToImageSource(Resources.loading5));
+            Loading[5] = new ImageBrush(BitmapToImageSource(Resources.loading6));
+            Loading[6] = new ImageBrush(BitmapToImageSource(Resources.loading7));
+            Loading[7] = new ImageBrush(BitmapToImageSource(Resources.loading8));
+        }
 
         private static BitmapImage BitmapToImageSource(Bitmap bitmap)
         {
@@ -136,7 +237,7 @@ namespace TranslateTool
     }
     public partial class MainWindowLogic
     {
-        public const string VersionNumber = "1.2.0";
+        public const string VersionNumber = "1.2.1";
         public const double WaitDelay = 1.5;
         public const double FadeTime = 0.5;
         public const double ShowDelay = 0.2;
@@ -440,7 +541,7 @@ namespace TranslateTool
             ConfigureMouseClickEvent(MinimiseButton, MinimiseButton_Click);
             Wait = 4;
             Translate.Start(this);
-            timer = new Timer(MainWindow, OnTick);
+            timer = new Timer(MainWindow, 16, OnTick);
             timer.Start();
         }
 
@@ -645,16 +746,46 @@ namespace TranslateTool
             }
         }
 
+        public void UpdateTextSpan(string text, TextRange textRange, System.Windows.Media.Color color)
+        {
+            WasColouredLine = true;
+            MainWindow.Dispatcher.Invoke(() =>
+            {
+                textRange.Text = $"{text}";
+                textRange.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(color));
+
+                if (AutoScrollEnabled)
+                {
+                    Output.ScrollToEnd();
+                }
+
+            });
+
+            if (AutoShowEnabled)
+            {
+                if (partialOpacityEnabled)
+                {
+                    ForceTargetOpacity = 1;
+                    ForceWait += 1.1 + (text.Length * 0.09);
+                }
+                else
+                {
+                    TargetOpacity = 1;
+                    Wait = 1.1 + (text.Length * 0.09);
+                }
+            }
+
+        }
+
         public void WriteLine(string text, System.Windows.Media.Color color)
         {
             WasColouredLine = true;
             MainWindow.Dispatcher.Invoke(() =>
             {
-                var textRange = new TextRange(Output.Document.ContentEnd, Output.Document.ContentEnd);
+                var textRange = new TextRange(Output.Document.Blocks.LastBlock.ContentEnd, Output.Document.Blocks.LastBlock.ContentEnd);
 
-                textRange.Text = text;
+                textRange.Text = $"{text}\r\n";
                 textRange.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(color));
-                Output.AppendText("\r\n");
 
                 if (AutoScrollEnabled)
                 {
@@ -680,42 +811,8 @@ namespace TranslateTool
 
         public void WriteLine(string text)
         {
-            if (WasColouredLine)
-            {
-                WriteLine(text, TextColor);
-                WasColouredLine = false;
-            }
-            else
-            {
-                Action<string> action;
-                if (AutoScrollEnabled)
-                {
-                    action = (value) =>
-                    {
-                        Output.AppendText(value);
-                        Output.ScrollToEnd();
-                    };
-                }
-                else
-                {
-                    action = Output.AppendText;
-                }
-                MainWindow.Dispatcher.Invoke(action, text + "\r\n");
-
-                if (AutoShowEnabled)
-                {
-                    if (partialOpacityEnabled)
-                    {
-                        ForceTargetOpacity = 1;
-                        ForceWait += 0.4 + (text.Length * 0.10);
-                    }
-                    else
-                    {
-                        TargetOpacity = 1;
-                        Wait = 0.4 + (text.Length * 0.10);
-                    }
-                }
-            }
+            WriteLine(text, TextColor);
+            WasColouredLine = false;
         }
 
         public void ApplyTranslation(Language language)
@@ -930,6 +1027,7 @@ namespace TranslateTool
 
         private void WindowClosing(object sender, EventArgs e)
         {
+            DelayHandler.Stop();
             SettingsWindow.Close();
             timer.Stop();
             Translate.Stop();

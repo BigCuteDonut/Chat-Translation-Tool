@@ -141,7 +141,7 @@ namespace TranslateTool
         {
         }
 
-        private static bool IsJapaneseChar(char chr)
+        public static bool IsJapaneseChar(char chr)
         {
             return
                 (chr >= 0x3041 && chr <= 0x3096) ||
@@ -153,7 +153,7 @@ namespace TranslateTool
                 (chr >= 0xFF5F && chr <= 0xFF9F);
         }
 
-        private static bool IsEnglishChar(char chr)
+        public static bool IsEnglishChar(char chr)
         {
             return
                 ((chr >= 97 && chr <= 122) ||
