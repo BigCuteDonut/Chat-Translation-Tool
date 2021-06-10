@@ -33,9 +33,10 @@ namespace ChatTranslator
         {
             var windowInteropHelper = new WindowInteropHelper(this);
             var settingsWindow = new SettingsWindow();
-            Logic = new MainWindowLogic();
 
-            Logic.Load(windowInteropHelper.Handle, this, settingsWindow, MainGrid, OutputDock, InputDock, ClickThroughButton, AutoShowButton, AutoScrollButton, SettingsButton, CloseButton, AutoShowButtonBackground, AutoScrollButtonBackground, SettingsButtonBackground, CloseButtonBackground, MoveButton, MinimiseButton, MinimiseButtonBackground, Output, Input, settingsWindow.PreventTransparencyCheck, settingsWindow.ShowAdditionalInfoCheck, settingsWindow.PartialTransparencyCheck, settingsWindow.ColourChatMessagesCheck, settingsWindow.DisableClickthroughCheck, settingsWindow.LanguageSelectLabel, settingsWindow.LanguageSelectEnglish, settingsWindow.LanguageSelectJapanese);
+            Logic = new MainWindowLogic();
+            Logic.Load(windowInteropHelper.Handle, this, settingsWindow, MainGrid, OutputDock, InputDock, ClickThroughButton, AutoShowButton, AutoScrollButton, SettingsButton, CloseButton, AutoShowButtonBackground, AutoScrollButtonBackground, SettingsButtonBackground, CloseButtonBackground, MoveButton, MinimiseButton, MinimiseButtonBackground, Output, Input);
+            settingsWindow.ApplyTranslation(MainWindowLogic.Language);
         }
 
         private void Style_Scroll(object sender, ScrollEventArgs e)

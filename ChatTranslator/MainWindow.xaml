@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatTranslator"
         mc:Ignorable="d"
-        Title="MainWindow" MinWidth="260" MinHeight="260" Height="346" Width="326" BorderThickness="0" Topmost="True" Background="#00132C4F" BorderBrush="#FF13293F" WindowStyle="None" ResizeMode="CanResize" Loaded="Window_Loaded" AllowsTransparency="True" SnapsToDevicePixels="True">
+        Title="MainWindow" MinWidth="260" MinHeight="260" Height="346" Width="326" BorderThickness="0" Topmost="True" Background="#00132C4F" BorderBrush="#FF13293F" WindowStyle="None" ResizeMode="CanResize" Loaded="Window_Loaded" AllowsTransparency="True" SnapsToDevicePixels="True" Icon="icon.png">
     <Window.Resources>
         <ControlTemplate x:Key="ScrollBarControlTemplate1" TargetType="{x:Type ScrollBar}">
             <Grid x:Name="Bg" SnapsToDevicePixels="True">
@@ -236,6 +236,8 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
         <sys:Double x:Key="ScrollOpacity">1</sys:Double>
+        <sys:Double x:Key="ShineOpacity">1</sys:Double>
+        <ScaleTransform x:Key="ShineScale" ScaleX="1" ScaleY="1"/>
         <SolidColorBrush x:Key="BaseColour" Color="#FF132648"></SolidColorBrush>
         <SolidColorBrush x:Key="HighlightColour" Color="#FF244464"></SolidColorBrush>
         <SolidColorBrush x:Key="ScrollHighlightColour" Color="#FF264678"></SolidColorBrush>
@@ -248,6 +250,9 @@
         ResizeBorderThickness="6" />
     </WindowChrome.WindowChrome>
     <Grid x:Name="MainGrid" Canvas.Left="0" Canvas.Top="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background ="{DynamicResource BaseColour}">
+        <Path RenderTransform="{DynamicResource ShineScale}" Stroke="{DynamicResource DecorationBrush}" Opacity="{DynamicResource ShineOpacity}" StrokeThickness="60" Data="M 0,290 A 100,48 30 1 0 35,-30"/>
+        <Path RenderTransform="{DynamicResource ShineScale}" Stroke="{DynamicResource DecorationShineBrush}" Opacity="{DynamicResource ShineOpacity}" StrokeThickness="20" Data="M -15,335 A 100,58 30 1 0 85,-60" />
+
         <Canvas Name="SettingsButtonBackground" HorizontalAlignment="Left" MinHeight="32" Margin="4,4,0,0" VerticalAlignment="Top" MinWidth="32" Background="{DynamicResource HighlightColour}"/>
         <Canvas Name="SettingsButton" HorizontalAlignment="Left" MinHeight="32" Margin="4,4,0,0" VerticalAlignment="Top" MinWidth="32"/>
         <Canvas Name="MoveButton" MinHeight="32" Margin="36,4,136,0" VerticalAlignment="Top" ScrollViewer.VerticalScrollBarVisibility="Disabled" Cursor="SizeAll" Background="#00000000"/>
@@ -281,5 +286,6 @@
         <DockPanel x:Name="InputDock" Margin="4,4,4,4" LastChildFill="True" Canvas.Left="8" Canvas.Top="256" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="{DynamicResource SubsectionColour}" Height="84">
             <TextBox x:Name="Input" DockPanel.Dock="Top" TextWrapping="Wrap" AcceptsTab="True" SpellCheck.IsEnabled="True" Margin="4,4,4,4" Background="{x:Null}" BorderThickness="0" FontFamily="Arial" FontSize="14" BorderBrush="{x:Null}" Foreground="#FFE6E6E6" CaretBrush="#FFE6E6E6"/>
         </DockPanel>
+        <Image HorizontalAlignment="Left" Height="100" Margin="503,289,-277,-43" VerticalAlignment="Top" Width="100"/>
     </Grid>
 </Window>

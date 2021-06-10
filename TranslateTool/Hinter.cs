@@ -25,9 +25,8 @@ namespace TranslateTool
 {
     class Hinter
     {
-        private List<Word> _database;
+        public List<Word> _database;
         private Dictionary<string, string> kanaConvert;
-        private byte[] fileBytes;
 
         public Hinter()
         {
@@ -190,11 +189,7 @@ namespace TranslateTool
             kanaConvert["ゾ"] = "zo";
             kanaConvert["\u30f3"] = "n";
 
-            fileBytes = File.ReadAllBytes("WordDatabase.bin");
-            var index = 0;
-
             _database = WordDatabase.Deserialise();
-            fileBytes = null;
         }
         private string HintKana(string kana)
         {
@@ -292,11 +287,14 @@ namespace TranslateTool
             return result.TrimEnd('\n').TrimEnd('\r');
         }
 
+        //This still has issues due to some words overlapping. For example it will detect "今日は" as "konnichiha" (hello), instead of the more likely 今日 は, kyou ha (today is). Possible solution is to check for such overlaps (perhaps include them in the database) and rerun the detection with the alternate interpretation. This would help preserve the integrity of the rest of the sentence, but could potentially slowdown the process exponentially, and also won't fix the above scenario. 
         public List<Word> FindWordsInString(string source)
         {
             var results = new List<Word>();
             var searchResults = new List<Word>();
+            Word lastLastPossibleWord = null;
             Word lastPossibleWord = null;
+            var lastReturnIndex = 0;
             var returnIndex = 0;
             var searchIndex = 0;
             var endSearch = false;
@@ -327,7 +325,9 @@ namespace TranslateTool
                         {
                             if (searchResult.ToString().Length == searchIndex + 1)
                             {
+                                lastLastPossibleWord = lastPossibleWord;
                                 lastPossibleWord = searchResult;
+                                lastReturnIndex = returnIndex;
                                 returnIndex = index;
                             }
                         }
@@ -346,9 +346,22 @@ namespace TranslateTool
                 {
                     if (lastPossibleWord != null)
                     {
-                        results.Add(lastPossibleWord);
-                        lastPossibleWord = null;
-                        index = returnIndex;
+                        var last = lastPossibleWord.Value.Text.Last();
+
+                        if ((last == 'は' || last == 'に' || last == 'が' || last == 'を' || last == 'の') && lastPossibleWord.ToString().Length != 1)
+                        {
+                            results.Add(lastLastPossibleWord);
+                            lastLastPossibleWord = null;
+                            lastPossibleWord = null;
+                            index = lastReturnIndex;
+                        }
+                        else
+                        {
+                            results.Add(lastPossibleWord);
+                            lastLastPossibleWord = null;
+                            lastPossibleWord = null;
+                            index = returnIndex;
+                        }
                     }
                     else
                     {

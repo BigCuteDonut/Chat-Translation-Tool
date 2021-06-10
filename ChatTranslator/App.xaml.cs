@@ -13,5 +13,13 @@ namespace ChatTranslator
     /// </summary>
     public partial class App : Application
     {
+        public static ResourceDictionary AppResources;
+        public static SettingsWindow SettingsWindow;
+        public App()
+        {
+            AppResources = Resources;
+            SettingsWindow = new SettingsWindow();
+            SettingsWindow.Hide();
+        }
     }
 }

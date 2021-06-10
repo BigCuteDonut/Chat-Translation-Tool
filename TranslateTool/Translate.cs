@@ -39,8 +39,7 @@ namespace TranslateTool
     }
     public static class Translate
     {
-        private static string DLEval = "document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__inner_textarea_container > textarea\").value";
-        private static string GGLEval = "var r = document.querySelector(\"body > div.container > div.frame > div.page.tlid-homepage.homepage.translate-text > div.homepage-content-wrap > div.tlid-source-target.main-header > div.source-target-row > div.tlid-results-container.results-container > div.tlid-result.result-dict-wrapper > div.result.tlid-copy-target > div.text-wrap.tlid-copy-target > div > span.tlid-translation.translation\").innerText; var p = \"\"; if(r.length > 2) var p = r.substr(r.length - 3); if(p == \"...\"){r = \"\";} r";
+        private static string DLEval = "document.querySelector(\"#dl_translator > div.lmt__text > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__inner_textarea_container > textarea\").value";
         private static string fileName;
         private static FileStream file;
         private static long lastFileLength;
@@ -50,12 +49,12 @@ namespace TranslateTool
         private static Data data;
         private static int cycles;
         private static Stack<Browser> translateFromBrowsers;
-        private static Browser translateToBrowser;
-        private static bool translateToBusy = false;
+        private static Browser translateToDLBrowser;
+        private static bool translateToDLBusy = false;
         private static bool inputInfoEnabled = false;
         private static bool colourChat = false;
         private static Hinter hinter;
-        private static int instanceCount = 4;
+        private static int instanceCount = 3;
         private static Regex commandRegex;
         private static int retryCount = 0;
         private static string lastInput = "";
@@ -82,8 +81,6 @@ namespace TranslateTool
             fileName = "";
 
             Command.Add(true, CommandRETRY, "retry", "re", "r");
-            Command.Add(true, CommandEN, "en", "english");
-            Command.Add(true, CommandJP, "jp", "japanese", "ni");
             Command.Add(true, CommandHELP, "help", "h");
             Command.Add(true, CommandFROM, "from", "f");
             Command.Add(false, CommandSEARCH, "search", "find", "s");
@@ -104,41 +101,58 @@ namespace TranslateTool
 
         public static bool LoadFile()
         {
+            var result = false;
             var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             var directory = new DirectoryInfo(Path.Combine(documentsPath, @"SEGA\PHANTASYSTARONLINE2\log"));
-            FileInfo latestFile = null;
-            DateTime mostRecentTime = new DateTime(0);
-
-            foreach (var file in directory.GetFiles("ChatLog*.txt"))
+            try
             {
-                if (file.CreationTime > mostRecentTime)
-                {
-                    mostRecentTime = file.CreationTime;
-                    latestFile = file;
-                }
-            }
+                FileInfo latestFile = null;
+                DateTime mostRecentTime = new DateTime(0);
 
-            if (latestFile != null)
-            {
-                if (fileName != latestFile.FullName)
+                foreach (var file in directory.GetFiles("ChatLog*.txt"))
                 {
-                    lastFileLength = new FileInfo(latestFile.FullName).Length;
-                    fileName = latestFile.FullName;
-
-                    if (file != null)
+                    if (file.CreationTime > mostRecentTime)
                     {
-                        file.Dispose();
-                        file = null;
+                        mostRecentTime = file.CreationTime;
+                        latestFile = file;
                     }
-                    file = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    mainWindow.WriteLine(Language.Text[2]);
-                    file.Position = lastFileLength;
+                }
+                directory = new DirectoryInfo(Path.Combine(documentsPath, @"SEGA\PHANTASYSTARONLINE2\log_ngs"));
 
-                    return true;
+                foreach (var file in directory.GetFiles("ChatLog*.txt"))
+                {
+                    if (file.CreationTime > mostRecentTime)
+                    {
+                        mostRecentTime = file.CreationTime;
+                        latestFile = file;
+                    }
+                }
+
+                if (latestFile != null)
+                {
+                    if (fileName != latestFile.FullName)
+                    {
+                        lastFileLength = new FileInfo(latestFile.FullName).Length;
+                        fileName = latestFile.FullName;
+
+                        if (file != null)
+                        {
+                            file.Dispose();
+                            file = null;
+                        }
+                        file = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                        mainWindow.WriteLine(Language.Text["PSO2ChatlogFound"]);
+                        file.Position = lastFileLength;
+
+                        result = true;
+                    }
                 }
             }
+            catch
+            {
 
-            return false;
+            }
+            return result;
         }
 
         public static void Start(MainWindowLogic mainWindow)
@@ -148,8 +162,8 @@ namespace TranslateTool
             Translate.mainWindow = mainWindow;
             Language = MainWindowLogic.Language;
             translateFromBrowsers = new Stack<Browser>(4);
-            translateToBrowser = new Browser();
-            translateToBrowser.AsyncOpenUrl("https://www.deepl.com/translator");
+            translateToDLBrowser = new Browser();
+            translateToDLBrowser.AsyncOpenUrl("https://www.deepl.com/translator");
             for (var i = 0; i < instanceCount; i++)
             {
                 browsers[i] = new Browser();
@@ -256,33 +270,9 @@ namespace TranslateTool
                 }
                 else
                 {
-                    mainWindow.WriteLine(outputText, (System.Windows.Media.Color)colour);
+                    mainWindow.WriteLine(outputText, colour);
                 }
 
-            }
-        }
-
-        private static void CommandJP(string[] args)
-        {
-            if (!Language.IsJapanese)
-            {
-                var language = new Language("ja", MainWindowLogic.VersionNumber);
-
-                Language = language;
-                mainWindow.ApplyTranslation(language);
-                mainWindow.SetInputValue($"");
-            }
-        }
-
-        private static void CommandEN(string[] args)
-        {
-            if (Language.IsJapanese)
-            {
-                var language = new Language("en", MainWindowLogic.VersionNumber);
-
-                Language = language;
-                mainWindow.ApplyTranslation(language);
-                mainWindow.SetInputValue($"");
             }
         }
 
@@ -294,7 +284,7 @@ namespace TranslateTool
 
         private static void CommandHELP(string[] args)
         {
-            mainWindow.WriteLine(Language.Text[8]);
+            mainWindow.WriteLine(Language.Text["Help"]);
             mainWindow.SetInputValue("");
         }
 
@@ -315,7 +305,7 @@ namespace TranslateTool
                 {
                     hinter = new Hinter();
                 }
-                mainWindow.WriteLine(hinter.FindWordsByMeaning(string.Join(" ",args)));
+                mainWindow.WriteLine(hinter.FindWordsByMeaning(string.Join(" ", args)));
                 mainWindow.SetInputValue($"");
             }
         }
@@ -353,7 +343,7 @@ namespace TranslateTool
 
                         if (result != null)
                         {
-                            mainWindow.WriteLine(string.Format(Language.Text[3], result));
+                            mainWindow.WriteLine(string.Format(Language.Text["CommandNotFound"], result));
                         }
                     }
                 }
@@ -490,7 +480,7 @@ namespace TranslateTool
             ThreadPool.QueueUserWorkItem((state) =>
             {
                 var (completionSource, targetBrowser, textValue) = ((TaskCompletionSource<string>, Browser, string))state;
-                var timeout = 8000;
+                var timeout = 16000;
 
                 if (targetBrowser.AsyncOpenUrl(url + Uri.EscapeDataString(textValue.Replace("/", "\u2215"))).GetAwaiter().GetResult())
                 {
@@ -543,16 +533,7 @@ namespace TranslateTool
             string link;
             var eval = DLEval;
 
-            if (Language.IsJapanese)
-            {
-                eval = GGLEval;
-                link = "https://translate.google.com/#view=home&op=translate&sl=en&tl=ja&text=";
-            }
-            else
-            {
-                link = "https://www.deepl.com/translator#ja/en/";
-            }
-
+            link = Language.GetTranslateFromLink();
             SleepUntil(() => translateFromBrowsers.Count > 0);
             var browser = translateFromBrowsers.Pop();
             var result = await TranslateAny(browser, link, eval, text);
@@ -566,33 +547,17 @@ namespace TranslateTool
         {
             string link;
             string eval = DLEval;
+            Browser browser = translateToDLBrowser;
 
             lastInput = text;
+            link = Language.GetTranslateToLink();
+            SleepUntil(() => !translateToDLBusy);
+            retryCount = 2;
+            translateToDLBusy = true;
 
-            if (Language.IsJapanese)
-            {
-                link = "https://www.deepl.com/translator#ja/en/";
-            }
-            else
-            {
-                if (retryCount == 0)
-                {
-                    text = text.TrimEnd('.');
-                    eval = GGLEval;
-                    link = "https://translate.google.com/#view=home&op=translate&sl=en&tl=ja&text=";
-                }
-                else
-                {
-                    link = "https://www.deepl.com/translator#en/ja/";
-                }
-            }
+            var result = await TranslateAny(browser, link, eval, text);
 
-            SleepUntil(() => !translateToBusy);
-            translateToBusy = true;
-
-            var result = await TranslateAny(translateToBrowser, link, eval, text);
-
-            translateToBusy = false;
+            translateToDLBusy = false;
 
             return result;
         }
@@ -621,12 +586,12 @@ namespace TranslateTool
         private static async void ProcessTranslateInputTo(DataPackage package)
         {
             package.Type = PackageTypes.Operating;
+            retryCount = 0;
 
             var result = await TranslateTo(package.Text);
 
             package.Text = result;
             package.Type = PackageTypes.TranslatedInput;
-            retryCount = 0;
 
             var confirmPackage = data.AddPackage();
 
@@ -660,7 +625,7 @@ namespace TranslateTool
                 {
                     ProcessTranslateInputFrom(package);
                 }
-                else if (package.Type == PackageTypes.TranslateInputTo && !translateToBusy)
+                else if (package.Type == PackageTypes.TranslateInputTo)
                 {
                     ProcessTranslateInputTo(package);
                 }
@@ -709,7 +674,7 @@ namespace TranslateTool
             var action = new Action(() => System.Windows.Clipboard.SetText(text));
 
             mainWindow.Invoke(action);
-            package.DelayHandler.Resolve(string.Format(Language.Text[7], text));
+            package.DelayHandler.Resolve(string.Format(Language.Text["SuccessfulInputTranslation"], text));
             package.Clear();
         }
 
@@ -735,7 +700,6 @@ namespace TranslateTool
         {
             var data = Translate.data.AddPackage();
 
-            data.DelayHandler = new DelayHandler(mainWindow);
             data.Type = PackageTypes.TranslateInputFrom;
             data.Text = text;
         }
@@ -756,30 +720,15 @@ namespace TranslateTool
         {
             object alternative = null;
 
-            if (Language.IsJapanese)
-            {
-                if (retryCount == 0)
-                {
-                    retryCount++;
-                }
-            }
-            if (retryCount == 0 && lastInput != string.Empty)
+            if (retryCount == 1 && lastInput != string.Empty)
             {
                 retryCount++;
                 alternative = await TranslateTo(lastInput);
                 retryCount--;
             }
-            else if (retryCount == 1)
-            {
-                var response = await translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(3) > button.lmt__translations_as_text__text_btn\").innerText");
-                if (response.Result != null)
-                {
-                    alternative = response.Result.ToString();
-                }
-            }
             else if (retryCount == 2)
             {
-                var response = await translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(4) > button.lmt__translations_as_text__text_btn\").innerText");
+                var response = await translateToDLBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__text > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container.halfViewHeight > div.lmt__translations_as_text > p:nth-child(3) > button.lmt__translations_as_text__text_btn\").innerText");
                 if (response.Result != null)
                 {
                     alternative = response.Result.ToString();
@@ -787,7 +736,15 @@ namespace TranslateTool
             }
             else if (retryCount == 3)
             {
-                var response = await translateToBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__translations_as_text > p:nth-child(5) > button.lmt__translations_as_text__text_btn\").innerText");
+                var response = await translateToDLBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__text > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container.halfViewHeight > div.lmt__translations_as_text > p:nth-child(4) > button.lmt__translations_as_text__text_btn\").innerText");
+                if (response.Result != null)
+                {
+                    alternative = response.Result.ToString();
+                }
+            }
+            else if (retryCount == 4)
+            {
+                var response = await translateToDLBrowser.Page.EvaluateScriptAsync("document.querySelector(\"#dl_translator > div.lmt__text > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container.halfViewHeight > div.lmt__translations_as_text > p:nth-child(5) > button.lmt__translations_as_text__text_btn\").innerText");
                 if (response.Result != null)
                 {
                     alternative = response.Result.ToString();
@@ -795,7 +752,7 @@ namespace TranslateTool
             }
             if (alternative == null)
             {
-                mainWindow.WriteLine(Language.Text[18]);
+                mainWindow.WriteLine(Language.Text["NoMoreSuggestions"]);
             }
             else
             {
@@ -803,12 +760,14 @@ namespace TranslateTool
                 var translationPackage = data.AddPackage();
 
                 translationPackage.Text = result;
+                translationPackage.DelayHandler = new DelayHandler(mainWindow);
                 translationPackage.Type = PackageTypes.TranslatedInput;
 
                 var confirmResult = await TranslateFrom(result);
                 var confirmPackage = data.AddPackage();
 
                 confirmPackage.Text = confirmResult;
+                confirmPackage.DelayHandler = new DelayHandler(mainWindow);
                 confirmPackage.Type = PackageTypes.TranslatedInputConfirmation;
                 retryCount++;
 

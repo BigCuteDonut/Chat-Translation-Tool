@@ -25,8 +25,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.IO;
 using System.Windows.Interop;
 using TranslateTool.Properties;
 using System.Drawing;
@@ -167,10 +166,10 @@ namespace TranslateTool
                 });
                 this.timer = timer;
                 timer.Start();
-                if(window.AutoScrollEnabled)
-                {
+                //if(Settings.AutoScroll)
+                //{
                     window.Output.ScrollToEnd();
-                }
+                //}
             });
         }
 
@@ -235,9 +234,22 @@ namespace TranslateTool
             }
         }
     }
+    public struct Vector2
+    {
+        public int X;
+        public int Y;
+
+        public Vector2(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
+    }
     public partial class MainWindowLogic
     {
-        public const string VersionNumber = "1.2.1";
+        public const int DEFAULTWIDTH = 355;
+        public const int DEFAULTHEIGHT = 400;
+        public const string VersionNumber = "8.6.21";
         public const double WaitDelay = 1.5;
         public const double FadeTime = 0.5;
         public const double ShowDelay = 0.2;
@@ -268,7 +280,6 @@ namespace TranslateTool
         static extern bool ReleaseCapture();
 
         private bool leftMouseButtonPressed = false;
-        private bool partialOpacityEnabled = false;
         private Timer timer;
         private double dpiX;
         private double dpiY;
@@ -284,8 +295,6 @@ namespace TranslateTool
         public double ForceWait = 1;
         public double TimeScale = 0.2;
         public bool ToolTipShow = false;
-        public bool AutoScrollEnabled = true;
-        public bool AutoShowEnabled = false;
         public bool ClickThroughEnabled = false;
         public bool Closed = false;
         public int OldStyle;
@@ -312,21 +321,11 @@ namespace TranslateTool
         public Canvas SettingsButtonBackground;
         public RichTextBox Output;
         public TextBox Input;
-        public CheckBox PreventTransparencyCheck;
-        public CheckBox ShowAdditionalInfoCheck;
-        public CheckBox PartialOpacityCheck;
-        public CheckBox ColourChatMessagesCheck;
-        public CheckBox DisableClickthroughCheck;
-        public RadioButton EnglishRadio;
-        public RadioButton JapaneseRadio;
-        public Label LanguageSelectLabel;
         public bool SettingsShown = false;
-        public bool AutoHideEnabled = true;
         public string[] InputHistory = new string[256];
         public byte HistoryIndex = 0;
         public byte HistoryCurrent = 0;
         public bool TranslatorLoaded = false;
-        public bool DisableClickthroughToggle = false;
         public bool WasColouredLine = false;
 
         public MainWindowLogic()
@@ -349,6 +348,7 @@ namespace TranslateTool
                 OutputDock.Background =
                     new SolidColorBrush(System.Windows.Media.Color.FromArgb(alphaOutputBackground, TextBackgroundColor.R, TextBackgroundColor.G, TextBackgroundColor.B));
                 MainWindow.Resources["ScrollOpacity"] = 0.2 + (value * 0.8);
+                MainWindow.Resources["ShineOpacity"] = value;
                 InputDock.Opacity = value;
                 ClickThroughButton.Opacity = value;
                 SettingsButton.Opacity = value;
@@ -364,7 +364,7 @@ namespace TranslateTool
         {
             get
             {
-                if (partialOpacityEnabled)
+                if (Settings.PartialTransparency)
                 {
                     return partialOpacity;
                 }
@@ -375,7 +375,7 @@ namespace TranslateTool
             }
             set
             {
-                if (partialOpacityEnabled)
+                if (Settings.PartialTransparency)
                 {
                     PartialOpacity = value;
                 }
@@ -393,39 +393,72 @@ namespace TranslateTool
 
         public void ApplySettings()
         {
-            MainWindow.Left = Settings.Default.WindowLocation.X;
-            MainWindow.Top = Settings.Default.WindowLocation.Y;
-            MainWindow.Width = Settings.Default.WindowSize.Width;
-            MainWindow.Height = Settings.Default.WindowSize.Height;
-            AutoHideEnabled = !Settings.Default.PreventWindowTransparency;
-            PreventTransparencyCheck.IsChecked = Settings.Default.PreventWindowTransparency;
-            partialOpacityEnabled = Settings.Default.PartialOpacity;
-            PartialOpacityCheck.IsChecked = Settings.Default.PartialOpacity;
-            ColourChatMessagesCheck.IsChecked = Settings.Default.ColourChatMessages;
+            MainWindow.Left = Settings.WindowPosition.Value.X;
+            MainWindow.Top = Settings.WindowPosition.Value.Y;
+            MainWindow.Width = Settings.WindowSize.Value.X;
+            MainWindow.Height = Settings.WindowSize.Value.Y;
 
-            if (Settings.Default.ColourChatMessages)
+            if (Settings.ColourChat)
             {
-                ColourChatMessagesCheck.IsChecked = true;
                 Translate.EnableColourChat();
             }
             else
             {
-                ColourChatMessagesCheck.IsChecked = false;
                 Translate.DisableColourChat();
             }
-            if (Settings.Default.DisableClickThrough)
+            if (Settings.ClickthroughKeyEnabled)
             {
-                DisableClickthroughToggle = true;
-                DisableClickthroughCheck.IsChecked = true;
-                UnregisterHotKey(MainWindowHandle, 1);
+                RegisterHotKey(MainWindowHandle, 1, (int)Settings.ClickthroughKey.Value.Modifier, (int)Settings.ClickthroughKey.Value.Key);
             }
-            else
+            if (Settings.OCRKeyEnabled)
             {
-                RegisterHotKey(MainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
-                DisableClickthroughCheck.IsChecked = false;
-                DisableClickthroughToggle = false;
+                RegisterHotKey(MainWindowHandle, 2, 2, (int)System.Windows.Forms.Keys.Y);
             }
+            ((ScaleTransform)MainWindow.Resources["ShineScale"]).ScaleX = MainWindow.Width / DEFAULTWIDTH;
+            ((ScaleTransform)MainWindow.Resources["ShineScale"]).ScaleY = MainWindow.Height / DEFAULTHEIGHT;
+        }
 
+        public void TranslateRecentScreenshot()
+        {
+            //var directory = new DirectoryInfo(Settings.OCRDirectory.Value);
+            var directory = new DirectoryInfo("C:\\Users\\azure\\Documents\\ShareX\\Screenshots\\2021-06");
+            var mostRecentTime = new DateTime(0);
+            FileInfo latestFile = null;
+
+            foreach (var file in directory.GetFiles())
+            {
+                if (file.CreationTime > mostRecentTime)
+                {
+                    mostRecentTime = file.CreationTime;
+                    latestFile = file;
+                }
+            }
+            if (latestFile != null)
+            {
+                string result;
+                var process = new Process();
+
+                File.Copy(latestFile.FullName, "Tesseract-OCR\\input", true);
+                process.StartInfo.WorkingDirectory = "Tesseract-OCR";
+                process.StartInfo.FileName = "Tesseract-OCR\\tesseract.exe";
+                process.StartInfo.Arguments = "input output -l jpn";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                Console.WriteLine(process.StandardOutput.ReadToEnd());
+                result = File.ReadAllText("Tesseract-OCR\\output.txt").Trim();
+                if (result.Length > 0)
+                {
+                    Translate.TranslateChat("OCR", result, TextColor);
+                }
+                else
+                {
+
+                }
+                process.Dispose();
+                File.Delete("Tesseract-OCR\\output.txt");
+            }
         }
 
         public void ConfigureMouseClickEvent(UIElement element, Action<object, MouseEventArgs> action)
@@ -452,7 +485,7 @@ namespace TranslateTool
 
         }
 
-        public void Load(IntPtr mainWindowHandle, Window mainWindow, Window settingsWindow, Grid mainGrid, DockPanel outputDock, DockPanel inputDock, Canvas clickThroughButton, Canvas autoShowButton, Canvas autoScrollButton, Canvas settingsButton, Canvas closeButton, Canvas autoShowButtonBackground, Canvas autoScrollButtonBackground, Canvas settingsButtonBackground, Canvas closeButtonBackground, Canvas moveButton, Canvas minimiseButton, Canvas minimiseButtonBackground, RichTextBox output, TextBox input, CheckBox preventTransparencyCheck, CheckBox showAdditionalInfoCheck, CheckBox partialOpacityCheck, CheckBox colourChatMessagesCheck, CheckBox disableClickThroughCheck, Label languageSelectLabel, RadioButton englishRadio, RadioButton japaneseRadio)
+        public void Load(IntPtr mainWindowHandle, Window mainWindow, Window settingsWindow, Grid mainGrid, DockPanel outputDock, DockPanel inputDock, Canvas clickThroughButton, Canvas autoShowButton, Canvas autoScrollButton, Canvas settingsButton, Canvas closeButton, Canvas autoShowButtonBackground, Canvas autoScrollButtonBackground, Canvas settingsButtonBackground, Canvas closeButtonBackground, Canvas moveButton, Canvas minimiseButton, Canvas minimiseButtonBackground, RichTextBox output, TextBox input)
         {
             var dpiXProperty = typeof(SystemParameters).GetProperty("DpiX", BindingFlags.NonPublic | BindingFlags.Static);
             var dpiYProperty = typeof(SystemParameters).GetProperty("Dpi", BindingFlags.NonPublic | BindingFlags.Static);
@@ -484,14 +517,6 @@ namespace TranslateTool
             MinimiseButtonBackground = minimiseButtonBackground;
             Output = output;
             Input = input;
-            PreventTransparencyCheck = preventTransparencyCheck;
-            ShowAdditionalInfoCheck = showAdditionalInfoCheck;
-            PartialOpacityCheck = partialOpacityCheck;
-            ColourChatMessagesCheck = colourChatMessagesCheck;
-            DisableClickthroughCheck = disableClickThroughCheck;
-            LanguageSelectLabel = languageSelectLabel;
-            EnglishRadio = englishRadio;
-            JapaneseRadio = japaneseRadio;
             ClickThroughButton.Background = ImageResources.ClickThroughDisabled;
             AutoShowButton.Background = ImageResources.AutoShowDisabled;
             AutoScrollButton.Background = ImageResources.AutoScroll;
@@ -522,135 +547,142 @@ namespace TranslateTool
             MinimiseButton.MouseEnter += MinimiseButton_MouseEnter;
             MinimiseButton.MouseLeave += MinimiseButton_MouseLeave;
             MoveButton.MouseDown += MoveStart;
-            PreventTransparencyCheck.Checked += PreventTransparencyCheck_Checked;
-            PreventTransparencyCheck.Unchecked += PreventTransparencyCheck_UnChecked;
-            ShowAdditionalInfoCheck.Checked += ShowAdditionalInfoCheck_Checked;
-            ShowAdditionalInfoCheck.Unchecked += ShowAdditionalInfoCheck_UnChecked;
-            PartialOpacityCheck.Checked += PartialOpacityCheck_Checked;
-            PartialOpacityCheck.Unchecked += PartialOpacityCheck_UnChecked;
-            ColourChatMessagesCheck.Checked += ColourChatMessagesCheck_Checked;
-            ColourChatMessagesCheck.Unchecked += ColourChatMessagesCheck_UnChecked;
-            DisableClickthroughCheck.Checked += DisableClickthroughCheck_Checked;
-            DisableClickthroughCheck.Unchecked += DisableClickthroughCheck_UnChecked;
-            EnglishRadio.Checked += EnglishRadio_Checked;
-            JapaneseRadio.Checked += JapaneseRadio_Checked;
+            Settings.AdditionalInfo.OnChanged += AdditionalInfoSettingChanged;
+            Settings.PartialTransparency.OnChanged += PartialOpacitySettingChanged;
+            Settings.ColourChat.OnChanged += ColourChatMessagesSettingChanged;
+            Settings.ClickthroughKeyEnabled.OnChanged += EnableClickthroughKeySettingChanged;
+            Settings.ClickthroughKey.OnChanged += ClickthroughKeySettingChanged;
+            Settings.OCRKey.OnChanged += OCRKeySettingChanged;
+            Settings.OCRKeyEnabled.OnChanged += EnableOCRKeySettingChanged;
+            Settings.Language.OnChanged += LanguageSettingChanged;
             ConfigureMouseClickEvent(AutoShowButton, AutoShowButton_Click);
             ConfigureMouseClickEvent(AutoScrollButton, AutoScrollButton_Click);
             ConfigureMouseClickEvent(SettingsButton, SettingsButton_Click);
             ConfigureMouseClickEvent(CloseButton, CloseButton_Click);
             ConfigureMouseClickEvent(MinimiseButton, MinimiseButton_Click);
             Wait = 4;
+            //MainWindow.Hide();
             Translate.Start(this);
             timer = new Timer(MainWindow, 16, OnTick);
             timer.Start();
+            Settings.FirstTimeStartup.Value = false;
         }
 
-        private void JapaneseRadio_Checked(object sender, RoutedEventArgs e)
+        private void LanguageSettingChanged(object sender, SettingChangedEventArgs<UserLanguage> e)
         {
-            if (!Language.IsJapanese)
+            if (e.NewValue != e.OldValue)
             {
-                var language = new Language("ja", MainWindowLogic.VersionNumber);
+                var language = new Language(MainWindowLogic.VersionNumber);
 
                 Translate.Language = language;
                 ApplyTranslation(language);
-                EnglishRadio.IsChecked = false;
-            }
-        }
-
-        private void EnglishRadio_Checked(object sender, RoutedEventArgs e)
-        {
-            if (Language.IsJapanese)
-            {
-                var language = new Language("en", MainWindowLogic.VersionNumber);
-
-                Language = language;
-                ApplyTranslation(language);
-                JapaneseRadio.IsChecked = false;
             }
         }
 
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            Settings.Default.WindowSize = new System.Drawing.Size((int)MainWindow.Width, (int)MainWindow.Height);
-            Settings.Default.Save();
+            Settings.WindowSize.Value = new Vector2((int)MainWindow.Width, (int)MainWindow.Height);
+            ((ScaleTransform)MainWindow.Resources["ShineScale"]).ScaleX = MainWindow.Width / DEFAULTWIDTH;
+            ((ScaleTransform)MainWindow.Resources["ShineScale"]).ScaleY = MainWindow.Height / DEFAULTHEIGHT;
         }
 
-        private void PreventTransparencyCheck_Checked(object sender, RoutedEventArgs e)
+        private void AdditionalInfoSettingChanged(object sender, SettingChangedEventArgs<bool> e)
         {
-            AutoHideEnabled = false;
-            Settings.Default.PreventWindowTransparency = false;
-            Settings.Default.Save();
-        }
-
-        private void PreventTransparencyCheck_UnChecked(object sender, RoutedEventArgs e)
-        {
-            AutoHideEnabled = true;
-            Settings.Default.PreventWindowTransparency = true;
-            Settings.Default.Save();
-        }
-
-        private void ShowAdditionalInfoCheck_Checked(object sender, RoutedEventArgs e)
-        {
-            Translate.EnableAdditionalInputInfo();
-            Settings.Default.InputInfoEnabled = true;
-            Settings.Default.Save();
-        }
-
-        private void ShowAdditionalInfoCheck_UnChecked(object sender, RoutedEventArgs e)
-        {
-            Translate.DisableAdditionalInputInfo();
-            Settings.Default.InputInfoEnabled = false;
-            Settings.Default.Save();
-        }
-
-        private void PartialOpacityCheck_Checked(object sender, RoutedEventArgs e)
-        {
-            partialOpacityEnabled = true;
-            Settings.Default.PartialOpacity = true;
-            Settings.Default.Save();
-        }
-
-        private void PartialOpacityCheck_UnChecked(object sender, RoutedEventArgs e)
-        {
-            PartialOpacity = 1;
-            partialOpacityEnabled = false;
-            Settings.Default.PartialOpacity = false;
-            Settings.Default.Save();
-        }
-
-        private void ColourChatMessagesCheck_Checked(object sender, RoutedEventArgs e)
-        {
-            Settings.Default.ColourChatMessages = true;
-            Settings.Default.Save();
-            Translate.EnableColourChat();
-        }
-
-        private void ColourChatMessagesCheck_UnChecked(object sender, RoutedEventArgs e)
-        {
-            Settings.Default.ColourChatMessages = false;
-            Settings.Default.Save();
-            Translate.DisableColourChat();
-        }
-
-        private void DisableClickthroughCheck_Checked(object sender, RoutedEventArgs e)
-        {
-            Settings.Default.DisableClickThrough = true;
-            Settings.Default.Save();
-            DisableClickthroughToggle = true;
-            UnregisterHotKey(MainWindowHandle, 1);
-
-            if (ClickThroughEnabled)
+            if (e.NewValue != e.OldValue)
             {
-                ToggleClickThrough(MainWindowHandle);
+                if (e.NewValue)
+                {
+                    Translate.EnableAdditionalInputInfo();
+                }
+                else
+                {
+                    Translate.DisableAdditionalInputInfo();
+                }
             }
         }
 
-        private void DisableClickthroughCheck_UnChecked(object sender, RoutedEventArgs e)
+        private void PartialOpacitySettingChanged(object sender, SettingChangedEventArgs<bool> e)
         {
-            Settings.Default.DisableClickThrough = false;
-            DisableClickthroughToggle = false;
-            RegisterHotKey(MainWindowHandle, 1, 2, (int)System.Windows.Forms.Keys.T);
-            Settings.Default.Save();
+            if (e.NewValue != e.OldValue)
+            {
+                if (e.NewValue == false)
+                {
+                    PartialOpacity = 1;
+                }
+            }
+        }
+
+        private void ColourChatMessagesSettingChanged(object sender, SettingChangedEventArgs<bool> e)
+        {
+            if (e.NewValue != e.OldValue)
+            {
+                if (e.NewValue)
+                {
+                    Translate.EnableAdditionalInputInfo();
+                }
+                else
+                {
+                    Translate.DisableAdditionalInputInfo();
+                }
+            }
+        }
+
+        private void EnableClickthroughKeySettingChanged(object sender, SettingChangedEventArgs<bool> e)
+        {
+            if (e.NewValue != e.OldValue)
+            {
+                if (e.NewValue)
+                {
+                    RegisterHotKey(MainWindowHandle, 1, (int)Settings.ClickthroughKey.Value.Modifier, (int)Settings.ClickthroughKey.Value.Key);
+                }
+                else
+                {
+                    if(ClickThroughEnabled)
+                    {
+                        ToggleClickThrough(MainWindowHandle);
+                    }
+                    UnregisterHotKey(MainWindowHandle, 1);
+                }
+            }
+        }
+
+        private void ClickthroughKeySettingChanged(object sender, SettingChangedEventArgs<Hotkey> e)
+        {
+            if (e.NewValue != e.OldValue)
+            {
+                if (Settings.ClickthroughKeyEnabled)
+                {
+                    UnregisterHotKey(MainWindowHandle, 1);
+                    RegisterHotKey(MainWindowHandle, 1, (int)e.NewValue.Modifier, (int)e.NewValue.Key);
+                }
+            }
+        }
+
+        private void EnableOCRKeySettingChanged(object sender, SettingChangedEventArgs<bool> e)
+        {
+            if (e.NewValue != e.OldValue)
+            {
+                if (e.NewValue)
+                {
+                    RegisterHotKey(MainWindowHandle, 2, (int)Settings.OCRKey.Value.Modifier, (int)Settings.OCRKey.Value.Key);
+                }
+                else
+                {
+                    UnregisterHotKey(MainWindowHandle, 2);
+                }
+            }
+        }
+
+        private void OCRKeySettingChanged(object sender, SettingChangedEventArgs<Hotkey> e)
+        {
+            if (e.NewValue != e.OldValue)
+            {
+                if (Settings.OCRKeyEnabled)
+                {
+                    UnregisterHotKey(MainWindowHandle, 2);
+                    RegisterHotKey(MainWindowHandle, 2, (int)e.NewValue.Modifier, (int)e.NewValue.Key);
+                }
+            }
         }
 
         public void RevertInput()
@@ -680,9 +712,16 @@ namespace TranslateTool
 
         public IntPtr WndProc(IntPtr windowHandle, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (message == 0x0312 && wParam.ToInt32() == 1)
+            if (message == 0x0312)
             {
-                ToggleClickThrough(windowHandle);
+                if (wParam.ToInt32() == 1)
+                {
+                    ToggleClickThrough(windowHandle);
+                }
+                else if (wParam.ToInt32() == 2)
+                {
+                    TranslateRecentScreenshot();
+                }
             }
             else if (message == 0x201)
             {
@@ -699,40 +738,40 @@ namespace TranslateTool
 
         public void ToggleClickThrough(IntPtr windowHandle)
         {
-            if (!DisableClickthroughToggle)
+            if (!ClickThroughEnabled)
             {
-                if (!ClickThroughEnabled)
-                {
-                    OldStyle = GetWindowLong(windowHandle, -20);
+                OldStyle = GetWindowLong(windowHandle, -20);
 
-                    ClickThroughEnabled = true;
-                    SetWindowLong(windowHandle, -20, OldStyle | 0x80000 | 0x20);
-                    ClickThroughButton.Background = ImageResources.ClickThrough;
-                }
-                else
-                {
-                    SetWindowLong(windowHandle, -20, OldStyle);
-                    ClickThroughEnabled = false;
-                    ClickThroughButton.Background = ImageResources.ClickThroughDisabled;
-                }
+                ClickThroughEnabled = true;
+                SetWindowLong(windowHandle, -20, OldStyle | 0x80000 | 0x20);
+                ClickThroughButton.Background = ImageResources.ClickThrough;
+            }
+            else
+            {
+                SetWindowLong(windowHandle, -20, OldStyle);
+                ClickThroughEnabled = false;
+                ClickThroughButton.Background = ImageResources.ClickThroughDisabled;
             }
         }
 
         public void ToggleAutoShow()
         {
-            if (!AutoShowEnabled)
+            Settings.AutoShow.Value = !Settings.AutoShow;
+        }
+
+        public void AutoShowSettingChanged(object sender, SettingChangedEventArgs<bool> e)
+        {
+            if (!e.NewValue)
             {
-                AutoShowEnabled = true;
                 AutoShowButton.Background = ImageResources.AutoShow;
             }
             else
             {
-                AutoShowEnabled = false;
                 AutoShowButton.Background = ImageResources.AutoShowDisabled;
             }
         }
 
-        public void ToggleAutoScroll()
+        /*public void ToggleAutoScroll()
         {
             if (!AutoScrollEnabled)
             {
@@ -744,7 +783,7 @@ namespace TranslateTool
                 AutoScrollEnabled = false;
                 AutoScrollButton.Background = ImageResources.AutoScrollDisabled;
             }
-        }
+        }*/
 
         public void UpdateTextSpan(string text, TextRange textRange, System.Windows.Media.Color color)
         {
@@ -754,16 +793,16 @@ namespace TranslateTool
                 textRange.Text = $"{text}";
                 textRange.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(color));
 
-                if (AutoScrollEnabled)
-                {
+                //if (AutoScrollEnabled)
+                //{
                     Output.ScrollToEnd();
-                }
+                //}
 
             });
 
-            if (AutoShowEnabled)
+            if (Settings.AutoShow)
             {
-                if (partialOpacityEnabled)
+                if (Settings.PartialTransparency)
                 {
                     ForceTargetOpacity = 1;
                     ForceWait += 1.1 + (text.Length * 0.09);
@@ -787,16 +826,16 @@ namespace TranslateTool
                 textRange.Text = $"{text}\r\n";
                 textRange.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(color));
 
-                if (AutoScrollEnabled)
-                {
+                //if (AutoScrollEnabled)
+                //{
                     Output.ScrollToEnd();
-                }
+                //}
 
             });
 
-            if (AutoShowEnabled)
+            if (Settings.AutoShow)
             {
-                if (partialOpacityEnabled)
+                if (Settings.PartialTransparency)
                 {
                     ForceTargetOpacity = 1;
                     ForceWait += 1.1 + (text.Length * 0.09);
@@ -820,43 +859,27 @@ namespace TranslateTool
             Action action = () =>
             {
                 Language = language;
-                WriteLine(language.Text[8]);
-                WriteLine(language.Text[11]);
-                ClickThroughButton.ToolTip = language.Text[12];
-                AutoScrollButton.ToolTip = language.Text[13];
-                AutoShowButton.ToolTip = language.Text[14];
-                CloseButton.ToolTip = language.Text[15];
-                PreventTransparencyCheck.Content = language.Text[17];
-                PartialOpacityCheck.Content = language.Text[19];
-                ColourChatMessagesCheck.Content = language.Text[21];
-                DisableClickthroughCheck.Content = language.Text[22];
-                EnglishRadio.Content = language.Text[23];
-                JapaneseRadio.Content = language.Text[24];
-                LanguageSelectLabel.Content = language.Text[25];
-                MainWindow.Title = language.Text[26];
+                WriteLine(language.Text["Help"]);
+                WriteLine(language.Text["Introduction"]);
+                ClickThroughButton.ToolTip = language.Text["ClickthoughButtonToolTip"];
+                AutoScrollButton.ToolTip = language.Text["AutoScrollButtonToolTip"];
+                AutoShowButton.ToolTip = language.Text["AutoShowButtonToolTip"];
+                CloseButton.ToolTip = language.Text["CloseButtonToolTip"];
+                MainWindow.Title = language.Text["WindowTitle"];
 
-                if (language.IsJapanese)
+                if (language.Current != UserLanguage.English)
                 {
-                    ShowAdditionalInfoCheck.IsEnabled = false;
-                    ShowAdditionalInfoCheck.IsChecked = false;
                     Translate.DisableAdditionalInputInfo();
                     Input.SpellCheck.IsEnabled = false;
-                    JapaneseRadio.IsChecked = true;
-                    EnglishRadio.IsChecked = false;
                 }
                 else
                 {
                     Input.SpellCheck.IsEnabled = true;
-                    ShowAdditionalInfoCheck.IsEnabled = true;
-                    ShowAdditionalInfoCheck.IsChecked = Settings.Default.InputInfoEnabled;
-                    if (ShowAdditionalInfoCheck.IsChecked ?? false)
+                    if (Settings.AdditionalInfo)
                     {
                         Translate.EnableAdditionalInputInfo();
                     }
-                    JapaneseRadio.IsChecked = false;
-                    EnglishRadio.IsChecked = true;
                 }
-                ShowAdditionalInfoCheck.Content = language.Text[16];
             };
             MainWindow.Dispatcher.Invoke(action);
         }
@@ -878,8 +901,7 @@ namespace TranslateTool
         public void MoveEnd()
         {
             Moving = false;
-            Settings.Default.WindowLocation = new System.Drawing.Point((int)MainWindow.Left, (int)MainWindow.Top);
-            Settings.Default.Save();
+            Settings.WindowPosition.Value = new Vector2((int)MainWindow.Left, (int)MainWindow.Top);
         }
 
         private void OnTick(object sender, TickEventArgs e)
@@ -912,7 +934,7 @@ namespace TranslateTool
                 {
                     TargetOpacity = 0;
                 }
-                if (AutoShowEnabled && partialOpacityEnabled)
+                if (Settings.AutoShow.Value && Settings.PartialTransparency.Value)
                 {
                     if (MainWindow.Opacity == 1 && ForceWait > 0)
                     {
@@ -940,7 +962,7 @@ namespace TranslateTool
                 TargetOpacity = 1;
                 ForceTargetOpacity = 1;
             }
-            if (AutoHideEnabled)
+            if (Settings.AutoHide)
             {
                 if (TargetOpacity != InterfaceOpacity)
                 {
@@ -968,7 +990,7 @@ namespace TranslateTool
                         InterfaceOpacity = 0;
                     }
                 }
-                if (AutoShowEnabled && partialOpacityEnabled)
+                if (Settings.AutoShow.Value && Settings.PartialTransparency.Value)
                 {
                     if (MainWindow.Opacity < ForceTargetOpacity)
                     {
@@ -1095,7 +1117,7 @@ namespace TranslateTool
 
         private void AutoScrollButton_Click(object sender, MouseEventArgs e)
         {
-            ToggleAutoScroll();
+            //ToggleAutoScroll();
             AutoScrollHighlight();
         }
 

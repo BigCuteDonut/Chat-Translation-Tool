@@ -16,129 +16,118 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 using System;
-using System.Globalization;
 using System.IO;
 using System.Text;
-using TranslateTool.Properties;
+using System.Collections.Generic;
 
 namespace TranslateTool
 {
     public class Language
     {
-        public readonly bool IsJapanese;
-        public string[] Text { get; private set; } = new string[48];
-
-        //Probably should redesign the layout of the language file, it's kinda dumb.
-        public Language(string languageCode, string version)
+        private static Dictionary<string, string> ReadLanguageConfig(string file)
         {
-            var fileName = "";
-            var fileText = "";
-            var reading = false;
-            var indexMatching = false;
-            var endMatching = false;
-            var messageIndex = 0;
-            var lastChar = '\0';
-            var messageBuilder = new StringBuilder();
-            var settingValue = Settings.Default.Language;
+            var text = File.ReadAllText(file);
+            var result = new Dictionary<string, string>();
+            var key = new StringBuilder();
+            var value = new StringBuilder();
+            var getKey = true;
+            var ignore = false;
+            var previousChar = '\0';
+            var index = 0;
 
-            if (languageCode == string.Empty)
+            while (index < text.Length)
             {
-                if (settingValue != "None")
-                {
-                    if (settingValue == "Japanese")
-                    {
-                        languageCode = "ja";
-                    }
-                    else if (settingValue == "English")
-                    {
-                        languageCode = "en";
-                    }
-                }
-                else
-                {
-                    languageCode = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-                }
-            }
-           
-            if (languageCode == "ja")
-            {
-                fileName = "Japanese.txt";
-                IsJapanese = true;
-                Text[11] = $"バグや問題点の報告は、Twitterの@CuteDonut3か、PSO2のBreadButterflyまでご連絡ください。このプログラムを開発している人は日本語を書くのが苦手なのでご注意ください。また、言語の修正を報告していただいても構いません。\n\nVer. {version}.";
-                Settings.Default.Language = "Japanese";
-                Settings.Default.Save();
-            }
-            else
-            {
-                fileName = "English.txt";
-                IsJapanese = false;
-                Text[11] = $"Please contact @CuteDonut on Twitter or BreadButterfly in-game(PSO2) to report bugs/issues. \n\nVersion {version}.";
-                Settings.Default.Language = "English";
-                Settings.Default.Save();
-            }
-            fileText = File.ReadAllText(Environment.CurrentDirectory + $@"\Language\{fileName}");
+                var current = text[index];
 
-            foreach (var chr in fileText)
-            {
-                if (reading)
+                if (current == '`' && previousChar != '\\')
                 {
-                    if (chr == ';')
+                    ignore = !ignore;
+                    previousChar = current;
+                    index++;
+                    continue;
+                }
+                if (!ignore)
+                {
+                    if (!(current == '\\' && previousChar != '\\'))
                     {
-                        if (endMatching)
+                        if (getKey)
                         {
-                            if (messageIndex != 11)
+                            if (current == '=')
                             {
-                                Text[messageIndex] = messageBuilder.ToString();
+                                getKey = false;
                             }
-                            messageBuilder.Clear();
-                            messageIndex++;
-                            reading = false;
-                            endMatching = false;
+                            else if (!char.IsWhiteSpace(current))
+                            {
+                                key.Append(current);
+                            }
                         }
                         else
                         {
-                            endMatching = true;
+                            if (current == ';' && previousChar != '\\')
+                            {
+                                getKey = true;
+                                result[key.ToString()] = value.ToString();
+                                key.Clear();
+                                value.Clear();
+                            }
+                            else
+                            {
+                                if (!char.IsWhiteSpace(current) || value.Length > 0)
+                                {
+                                    value.Append(current);
+                                }
+                            }
                         }
                     }
-                    else
-                    {
-                        if (endMatching)
-                        {
-                            messageBuilder.Append(';');
-                            endMatching = false;
-                        }
-                        messageBuilder.Append(chr);
-                    }
                 }
-                else if (indexMatching)
-                {
-                    if (lastChar == ':')
-                    {
-                        if (chr != ' ')
-                        {
-                            messageBuilder.Append(chr);
-                        }
-                        lastChar = '\0';
-                        reading = true;
-                    }
-                    else if (chr != ':' && chr != ' ' && !char.IsDigit(chr))
-                    {
-                        indexMatching = false;
-                    }
-                    else
-                    {
-                        lastChar = chr;
-                    }
-                }
-                else if (char.IsDigit(chr))
-                {
-                    indexMatching = true;
-                }
+                previousChar = current;
+                index++;
+            }
+
+            return result;
+        }
+        public readonly UserLanguage Current;
+        public Dictionary<string, string> Text;
+
+        public Language(string version)
+        {
+            Current = Settings.Language.Value;
+            Text = Language.ReadLanguageConfig(Path.GetFullPath(Path.Combine(Settings.LanguageFileDirectory,$"{Settings.Language.Value}.txt")));
+
+            if (Settings.Language.Value == UserLanguage.English)
+            {
+                Text["Introduction"] = $"Please contact @CuteDonut3 on Twitter or BreadButterfly in-game(PSO2) to report bugs/issues. \n\nVersion {version}.";
+            }
+            else if (Settings.Language.Value == UserLanguage.Japanese)
+            {
+                Text["Introduction"] = $"バグや問題点の報告は、Twitterの@CuteDonut3か、PSO2のBreadButterflyまでご連絡ください。このプログラムを開発している人は日本語を書くのが苦手なのでご注意ください。また、言語の修正を報告していただいても構いません。\n\nVer. {version}.";
             }
         }
 
-        public Language(string version) : this("", version)
+        public string GetTranslateFromLink()
         {
+            if(Current == UserLanguage.English)
+            {
+                return "https://www.deepl.com/translator#ja/en/";
+            }
+            if(Current == UserLanguage.Japanese)
+            {
+                return "https://www.deepl.com/translator#en/ja/";
+            }
+            return "";
+        }
+
+        public string GetTranslateToLink()
+        {
+            if (Current == UserLanguage.English)
+            {
+                return "https://www.deepl.com/translator#en/ja/";
+            }
+            if (Current == UserLanguage.Japanese)
+            {
+                return "https://www.deepl.com/translator#ja/en/";
+            }
+            return "";
         }
 
         public static bool IsJapaneseChar(char chr)
@@ -163,7 +152,7 @@ namespace TranslateTool
 
         public bool IsTargetLanguageChar(char chr)
         {
-            if (!IsJapanese)
+            if (Current != UserLanguage.Japanese)
             {
                 return IsJapaneseChar(chr);
             }

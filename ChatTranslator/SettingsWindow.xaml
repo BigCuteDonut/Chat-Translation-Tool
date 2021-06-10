@@ -1,23 +1,52 @@
 ﻿<Window x:Class="ChatTranslator.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatTranslator"
         mc:Ignorable="d"
-        Title="SettingsWindow" Height="auto" Width="auto" AllowsTransparency="True" WindowStyle="None" ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize" SizeToContent="WidthAndHeight" Loaded="Window_Loaded">
+        Title="SettingsWindow" Height="240" Width="440" AllowsTransparency="True" WindowStyle="None" ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize" SizeToContent="WidthAndHeight" Loaded="WindowLoaded" Background="{DynamicResource TextBackgroundBrush}" Foreground="{DynamicResource TextBrush}" FontFamily="Arial" FontSize="16">
+    <Window.Resources>
+        <sys:Double x:Key="ShineOpacity">1</sys:Double>
+        <ScaleTransform x:Key="ShineScale" ScaleX="1" ScaleY="1"/>
+    </Window.Resources>
     <Grid Background="#FF3A7DAC" Margin="0,0,0,0">
-        <Rectangle Fill="#FF0B1B2F" Height="auto" Margin="2,2,2,2" VerticalAlignment="Stretch" Width="auto" HorizontalAlignment="Stretch"/>
+        <Rectangle Fill="{DynamicResource FrameBrush}" Height="240" Margin="2,2,2,2" VerticalAlignment="Stretch" Width="440" HorizontalAlignment="Stretch"/>
+        <TabControl Foreground="{DynamicResource TextBrush}" Margin="2,6,2,2" Background="{DynamicResource FrameBrush}">
+            <TabItem x:Name="GeneralTab" Style="{DynamicResource TabItemStyle1}" Header="GeneralTab" Width="120" Height="32">
+                <Grid Background="#FF0B1B2F">
+
+                    <CheckBox x:Name="ShowAdditionalInfoCheck" Content="ShowAdditionalInfoCheck" HorizontalAlignment="Left" Margin="10,12,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="{DynamicResource HighlightBrush}" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+                    <CheckBox x:Name="PreventTransparencyCheck" Content="PreventTransparencyCheck" HorizontalAlignment="Left" Margin="10,32,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="{DynamicResource HighlightBrush}" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14"/>
+                    <CheckBox x:Name="PartialTransparencyCheck" Content="PartialTransparencyCheck" HorizontalAlignment="Left" Margin="10,52,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="{DynamicResource HighlightBrush}" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+                    <CheckBox x:Name="ColourChatMessagesCheck" Content="ColourChatMessagesCheck" HorizontalAlignment="Left" Margin="10,72,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="{DynamicResource HighlightBrush}" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+                    <CheckBox x:Name="ClickthroughKeyEnabledCheck" Content="DisableClickthroughHotkeyCheck" HorizontalAlignment="Left" Margin="10,92,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="{DynamicResource HighlightBrush}" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+                    <Button x:Name="ClickthroughHotkeyInput" Content="Hotkey: ..." HorizontalAlignment="Left" Margin="10,122,10,16" VerticalAlignment="Top" Style="{DynamicResource InputButton}" />
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="OCRTab" Style="{DynamicResource TabItemStyle1}" Header="OCRTab" Width="120" Height="32">
+                <Grid Background="#FF0B1B2F">
+                    <CheckBox x:Name="OCRKeyEnabledCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,12,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="{DynamicResource HighlightBrush}" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+                    <Button x:Name="OCRHotkeyInput" Content="Hotkey: ..." HorizontalAlignment="Left" Margin="10,42,10,16" VerticalAlignment="Top" Style="{DynamicResource InputButton}" />
+                    <Button x:Name="OCRDirectoryInput" Content="Environment.SpecialFolder.MyPictures" MaxWidth="300" HorizontalAlignment="Left" Margin="10,72,10,16" VerticalAlignment="Top" Style="{DynamicResource InputButton}"/>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="LanguageTab" Style="{DynamicResource TabItemStyle1}" Header="LanguageTab" Width="120" Height="32">
+                <Grid Background="{DynamicResource TextBackgroundBrush}">
+                    <Rectangle Fill="{DynamicResource SettingSectionBrush}" Height="60" Margin="10,10,10,16" VerticalAlignment="Top" Width="200" HorizontalAlignment="Left"/>
+                    <Label x:Name="LanguageSelectLabel" Content="LanguageSelectLabel" HorizontalAlignment="Left" Margin="8,8,0,0" VerticalAlignment="Top" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983" Foreground="{DynamicResource TextBrush}"/>
+                    <RadioButton x:Name="LanguageSelectEnglish" Content="LanguageSelectEnglish" HorizontalAlignment="Left" Margin="10,32,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+                    <RadioButton x:Name="LanguageSelectJapanese" Content="LanguageSelectJapanese" HorizontalAlignment="Left" Margin="10,52,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+                    <Rectangle Fill="{DynamicResource SettingSectionBrush}" Height="80" Margin="220,10,10,16" VerticalAlignment="Top" Width="200" HorizontalAlignment="Left"/>
+                    <Label x:Name="LanguageTargetLabel" Content="LanguageTargetLabel" HorizontalAlignment="Left" Margin="218,8,0,0" VerticalAlignment="Top" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983" Foreground="{DynamicResource TextBrush}"/>
+                    <RadioButton x:Name="LanguageTargetAny" Content="LanguageTargetAny" HorizontalAlignment="Left" Margin="220,32,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+                    <RadioButton x:Name="LanguageTargetEnglish" Content="LanguageTargetEnglish" HorizontalAlignment="Left" Margin="220,52,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+                    <RadioButton x:Name="LanguageTargetJapanese" Content="LanguageTargetJapanese" HorizontalAlignment="Left" Margin="220,72,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
         <Canvas x:Name="CloseButtonBackground" HorizontalAlignment="Right" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Background="#FF244464" Margin="0,6,6,0"/>
-        <Canvas x:Name="CloseButton" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Margin="0,6,6,0" HorizontalAlignment="Right" MouseEnter="CloseButton_MouseEnter" MouseLeave="CloseButton_MouseLeave" Loaded="CloseButton_Loaded"/>
-        <CheckBox x:Name="ShowAdditionalInfoCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,44,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
-        <CheckBox x:Name="PreventTransparencyCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,64,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14"/>
-        <CheckBox x:Name="PartialTransparencyCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,84,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
-        <CheckBox x:Name="ColourChatMessagesCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,104,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
-        <CheckBox x:Name="DisableClickthroughCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,124,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
-        <Rectangle Fill="#FF091927" Height="58" Margin="10,142,10,16" VerticalAlignment="Top" Width="auto" HorizontalAlignment="Stretch"/>
-        <Label x:Name="LanguageSelectLabel" Content="Label" HorizontalAlignment="Left" Margin="6,140,0,0" VerticalAlignment="Top" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983" Foreground="#FFE6E6E6"/>
-        <RadioButton x:Name="LanguageSelectEnglish" Content="RadioButton" HorizontalAlignment="Left" Margin="10,164,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
-        <RadioButton x:Name="LanguageSelectJapanese" Content="RadioButton" HorizontalAlignment="Left" Margin="10,184,10,16" VerticalAlignment="Top" Foreground="#FFE6E6E6" Background="#FF244464" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" RenderTransformOrigin="0.495,0.983"/>
+        <Canvas x:Name="CloseButton" MinHeight="32" VerticalAlignment="Top" MinWidth="32" Margin="0,6,6,0" HorizontalAlignment="Right"/>
     </Grid>
 </Window>
