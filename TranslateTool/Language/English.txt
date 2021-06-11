@@ -1,39 +1,55 @@
-﻿0: Move;;
-1: Translate;;
-2: Found newer chat log.;;
-3: No command called "{0}".;;
-4: Translation:
- {0};;
-5: Error: Translation request timed out.;;
-6: Error: Translation Failed.;;
-7: Message translated to "{0}".;;
-8: Help:
+﻿`This is a file comment and won't be parsed.`
+`To use certain reserved characters, put \ before them like so: \`  \;  \\ `
+`Format: key = value`
+`Whitespace after = is ignored until non whitespace is encountered.`
+`{<digit>} will be replaced at runtime.`
+TranslationAuthor = @CuteDonut3; `Author of this language file.`
+PSO2ChatlogFound = Updated PSO2 chat log.;
+NGSChatlogFound = Updated NGS chat log.;
+CommandNotFound = No command called "{0}".; `{0} = command name`
+TranslationTimedOut = Error: Translation request timed out.;
+TranslationUnknownError = Error: Translation Failed.;
+SuccessfulInputTranslation = Message translated to "{0}".; `{0} = translated message`
+Help = Help:
 The interface consists of:
 "Output": Contains translated and non-translated chat messages and other system information.
 "Input": You may type messages here, activated by pressing keyboard Enter while the input is active. If the message starts with "/", it will be taken as a command, otherwise it will be translated, and the result will be copied automatically.
 
 Commands:
 "/from <message>": This will translate a message from Japanese to English.
-"/jp": This will switch the program to Japanese user mode.
 "/search <words>": Search the Japanese word database for words based on their English meaning.
 "/help": Shows this message.
 "/searchkanji <word>": Search the Japanese word database for words based on their Kanji representation.
-;;
-9: This command is not yet implemented.;;
-10: ;;
-11: ;;
-12: Indicates the state of Clickthrough Mode. Press Ctrl+T to toggle it.;;
-13: Auto Scroll;;
-14: Auto Show;;
-15: Close;;
-16: Show addition info when translating input.;;
-17: Prevent window from becoming transparent.;;
-18: The translator has no additional translation suggestions.;;
-19: Enable partial transparency.;;
-20: Partial transparency minimum.;;
-21: Colour chat messages.;;
-22: Disable Clickthrough toggle.;;
-23: English;;
-24: 日本語;;
-25: User language:;;
-26: Chat Translator;;
+;
+CommandNotImplemented = This command is not yet implemented.;
+Introduction = Hardcoded;
+ClickthoughButtonToolTip = Indicates the state of Clickthrough Mode. Press Ctrl+T to toggle it.;
+AutoScrollButtonToolTip = Auto Scroll;
+AutoShowButtonToolTip = Auto Show;
+CloseButtonToolTip = Close;
+AdditionalInfoCheckbox = Show addition info when translating input.;
+AutoHideCheckbox = Allow the window to become transparent.;
+NoMoreSuggestions = The translator has no additional translation suggestions.;
+PartialTransparencyCheckbox = Enable partial transparency.;
+ColourChatMessagesCheckbox = Colour chat messages.;
+ClickthroughKeyEnabledCheckbox = Enable Clickthrough hotkey.;
+English = English; `Do not translate`
+Japanese = 日本語; `Do not translate`
+Russian = русский; `Do not translate`
+French = français; `Do not translate`
+German = Deutsch; `Do not translate`
+LanguageSelect = User language:;
+WindowTitle = Chat Translator;
+TranslateAnyLanguageCheckbox = Translate any language.;
+CreditMessage = UI Translation by {0}.; `{0} = TranslationAuthor`
+ClickthroughHotkeyInput = Clickthrough Hotkey: {0}.; `{0} = Hotkey`
+OCRKeyEnabledCheckbox = Enable image recognition hotkey.;
+OCRHotkeyInput = Image Recognition Hotkey: {0}.; `{0} = Hotkey`
+OCRNotice = How to use:
+1. Set folder that will contain images to be analyzed.
+2. Take a cropped screenshot and save it to the configured folder (using ShareX is the best way to do this).
+3. Press the image recognition Hotkey.
+4. Results may vary.;
+GeneralTab = General;
+OCRTab = Image Recognition;
+LanguageTab = Language;
