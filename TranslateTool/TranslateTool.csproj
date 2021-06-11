@@ -216,6 +216,7 @@
     <Compile Include="Browser.cs" />
     <Compile Include="FixedString.cs" />
     <Compile Include="Hotkey.cs" />
+    <Compile Include="Keyboard.cs" />
     <Compile Include="SettingHandler.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="WordDatabase.cs" />

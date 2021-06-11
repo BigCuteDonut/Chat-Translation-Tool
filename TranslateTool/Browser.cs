@@ -25,9 +25,10 @@ using System.Threading.Tasks;
 namespace TranslateTool
 {
 
-    public class Browser
+    public class Browser : IDisposable
     {
         private static CefSettings settings;
+        private bool disposed = false;
         public ChromiumWebBrowser page;
         public ChromiumWebBrowser Page
         {
@@ -107,6 +108,12 @@ namespace TranslateTool
         public void PageInitialize()
         {
             SpinWait.SpinUntil(() => page.IsBrowserInitialized);
+        }
+
+        public void Dispose()
+        {
+            disposed = true;
+            page.Dispose();
         }
     }
 }

@@ -7,11 +7,15 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using System.Windows.Input;
 using TranslateTool;
+using System.Windows.Interop;
+using WinKey = System.Windows.Forms.Keys;
+using Microsoft.Win32;
+using System.IO;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace ChatTranslator
 {
@@ -20,6 +24,10 @@ namespace ChatTranslator
     /// </summary>
     public partial class SettingsWindow : Window
     {
+        private List<HotkeyInputHandler> hotkeyInputHandlers = new List<HotkeyInputHandler>();
+        private bool windowLoaded = false;
+        public static bool windowConfigured = false;
+        public static TranslateTool.Keyboard Keyboard;
         public Dictionary<UIElement, ClickInfo> MouseClickConfigurationInfo = new Dictionary<UIElement, ClickInfo>();
 
         public SettingsWindow()
@@ -49,16 +57,29 @@ namespace ChatTranslator
             }
         }
 
+        private void BindHotkeySelect(Button button, string hotkeyMessageID, Setting<Hotkey> setting)
+        {
+            var handler = new HotkeyInputHandler(button, hotkeyMessageID, setting);
+
+            hotkeyInputHandlers.Add(handler);
+            button.Click += handler.CreateHotkeySelectBinding();
+        }
+
         public void ApplyTranslation(Language language)
         {
-            PreventTransparencyCheck.Content = language.Text["AutoHideCheckbox"];
-            PartialTransparencyCheck.Content = language.Text["PartialTransparencyCheckbox"];
-            ColourChatMessagesCheck.Content = language.Text["ColourChatMessagesCheckbox"];
-            ClickthroughKeyEnabledCheck.Content = language.Text["ClickthroughKeyEnabledCheckbox"];
-            LanguageSelectEnglish.Content = language.Text["English"];
-            LanguageSelectJapanese.Content = language.Text["Japanese"];
-            ShowAdditionalInfoCheck.Content = language.Text["AdditionalInfoCheckbox"];
-            LanguageSelectLabel.Content = language.Text["LanguageSelect"];
+            PreventTransparencyCheck.Content = language["AutoHideCheckbox"];
+            PartialTransparencyCheck.Content = language["PartialTransparencyCheckbox"];
+            ColourChatMessagesCheck.Content = language["ColourChatMessagesCheckbox"];
+            ClickthroughKeyEnabledCheck.Content = language["ClickthroughKeyEnabledCheckbox"];
+            OCRKeyEnabledCheck.Content = language["OCRKeyEnabledCheckbox"];
+            LanguageSelectEnglish.Content = language["English"];
+            LanguageSelectJapanese.Content = language["Japanese"];
+            ShowAdditionalInfoCheck.Content = language["AdditionalInfoCheckbox"];
+            LanguageSelectLabel.Content = language["LanguageSelect"];
+            GeneralTab.Header = language["GeneralTab"];
+            OCRTab.Header = language["OCRTab"];
+            LanguageTab.Header = language["LanguageTab"];
+            OCRNoticeLabel.Content = language["OCRNotice"];
 
             if (language.Current != UserLanguage.English)
             {
@@ -70,19 +91,75 @@ namespace ChatTranslator
             }
         }
 
+        public void Verify()
+        {
+            if (windowLoaded && !windowConfigured)
+            {
+                WindowLoaded(null, null);
+            }
+        }
+
         private void WindowLoaded(object sender, RoutedEventArgs e)
         {
-            CloseButton.Background = ImageResources.Close;
-            ConfigureMouseClickEvent(CloseButton, CloseButton_Clicked);
-            CloseButtonBackground.Opacity = 0;
-            BindCheckBoxSetting(ShowAdditionalInfoCheck, Settings.AdditionalInfo);
-            BindCheckBoxSetting(PreventTransparencyCheck, Settings.AutoHide);
-            BindCheckBoxSetting(PartialTransparencyCheck, Settings.PartialTransparency);
-            BindCheckBoxSetting(ColourChatMessagesCheck, Settings.ColourChat);
-            BindCheckBoxSetting(ClickthroughKeyEnabledCheck, Settings.ClickthroughKeyEnabled);
-            BindCheckBoxSetting(OCRKeyEnabledCheck, Settings.OCRKeyEnabled);
-            BindRadioSetting(new RadioButton[] { LanguageSelectEnglish, LanguageSelectJapanese }, new UserLanguage[] { UserLanguage.English, UserLanguage.Japanese }, Settings.Language);
-            Settings.Language.OnChanged += LanguageSettingChanged;
+            if (MainWindowLogic.Language != null && !windowConfigured)
+            {
+                SettingsWindow.Keyboard = new TranslateTool.Keyboard(HwndSource.FromVisual(this) as HwndSource);
+                ApplyTranslation(MainWindowLogic.Language);
+                CloseButton.Background = ImageResources.Close;
+                ConfigureMouseClickEvent(CloseButton, CloseButton_Clicked);
+                CloseButtonBackground.Opacity = 0;
+                BindCheckBoxSetting(ShowAdditionalInfoCheck, Settings.AdditionalInfo);
+                BindCheckBoxSetting(PreventTransparencyCheck, Settings.AutoHide);
+                BindCheckBoxSetting(PartialTransparencyCheck, Settings.PartialTransparency);
+                BindCheckBoxSetting(ColourChatMessagesCheck, Settings.ColourChat);
+                BindCheckBoxSetting(ClickthroughKeyEnabledCheck, Settings.ClickthroughKeyEnabled);
+                BindCheckBoxSetting(OCRKeyEnabledCheck, Settings.OCRKeyEnabled);
+                BindRadioSetting(new RadioButton[] { LanguageSelectEnglish, LanguageSelectJapanese }, new UserLanguage[] { UserLanguage.English, UserLanguage.Japanese }, Settings.Language);
+                BindHotkeySelect(ClickthroughHotkeyInput, "ClickthroughHotkeyInput", Settings.ClickthroughKey);
+                BindHotkeySelect(OCRHotkeyInput, "OCRHotkeyInput", Settings.OCRKey);
+                OCRDirectoryInput.Content = (string)Settings.OCRDirectory.Value;
+                OCRDirectoryInput.Click += (s, eventArgs) =>
+                {
+                    var dialog = new CommonOpenFileDialog();
+                    dialog.IsFolderPicker = true;
+                    var shareXPath = Path.GetFullPath(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ShareX"));
+
+                    if (Directory.Exists(shareXPath))
+                    {
+                        dialog.InitialDirectory = shareXPath;
+                    }
+
+                    if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                    {
+                        Settings.OCRDirectory.Value = dialog.FileName;
+                    }
+                    OCRDirectoryInput.Content = (string)Settings.OCRDirectory.Value;
+                };
+
+                if (!Settings.ClickthroughKeyEnabled)
+                {
+                    ClickthroughHotkeyInput.IsEnabled = false;
+                }
+                if (!Settings.OCRKeyEnabled)
+                {
+                    OCRHotkeyInput.IsEnabled = false;
+                }
+                Settings.OCRKeyEnabled.OnChanged += OCRKeyEnabledSettingChanged;
+                Settings.ClickthroughKeyEnabled.OnChanged += ClickthroughKeyEnabledSettingChanged;
+                Settings.Language.OnChanged += LanguageSettingChanged;
+                windowConfigured = true;
+            }
+            windowLoaded = true;
+        }
+
+        private void ClickthroughKeyEnabledSettingChanged(object sender, SettingChangedEventArgs<bool> e)
+        {
+            ClickthroughHotkeyInput.IsEnabled = e.NewValue;
+        }
+
+        private void OCRKeyEnabledSettingChanged(object sender, SettingChangedEventArgs<bool> e)
+        {
+            OCRHotkeyInput.IsEnabled = e.NewValue;
         }
 
         private void LanguageSettingChanged(object sender, SettingChangedEventArgs<UserLanguage> e)

@@ -27,9 +27,10 @@
             </TabItem>
             <TabItem x:Name="OCRTab" Style="{DynamicResource TabItemStyle1}" Header="OCRTab" Width="120" Height="32">
                 <Grid Background="#FF0B1B2F">
-                    <CheckBox x:Name="OCRKeyEnabledCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,12,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="{DynamicResource HighlightBrush}" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
-                    <Button x:Name="OCRHotkeyInput" Content="Hotkey: ..." HorizontalAlignment="Left" Margin="10,42,10,16" VerticalAlignment="Top" Style="{DynamicResource InputButton}" />
-                    <Button x:Name="OCRDirectoryInput" Content="Environment.SpecialFolder.MyPictures" MaxWidth="300" HorizontalAlignment="Left" Margin="10,72,10,16" VerticalAlignment="Top" Style="{DynamicResource InputButton}"/>
+                    <Label x:Name="OCRNoticeLabel" Content="CheckBox" HorizontalAlignment="Left" Margin="10,12,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="{x:Null}" Padding="1" FontSize="10"/>
+                    <CheckBox x:Name="OCRKeyEnabledCheck" Content="CheckBox" HorizontalAlignment="Left" Margin="10,72,10,16" VerticalAlignment="Top" Foreground="{DynamicResource TextBrush}" Background="{DynamicResource HighlightBrush}" BorderBrush="{x:Null}" FontFamily="Arial" FontSize="14" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+                    <Button x:Name="OCRHotkeyInput" Content="Hotkey: ..." HorizontalAlignment="Left" Margin="10,102,10,16" VerticalAlignment="Top" Style="{DynamicResource InputButton}" />
+                    <Button x:Name="OCRDirectoryInput" Content="Environment.SpecialFolder.MyPictures" MaxWidth="300" HorizontalAlignment="Left" Margin="10,132,10,16" VerticalAlignment="Top" Style="{DynamicResource InputButton}"/>
                 </Grid>
             </TabItem>
             <TabItem x:Name="LanguageTab" Style="{DynamicResource TabItemStyle1}" Header="LanguageTab" Width="120" Height="32">

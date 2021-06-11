@@ -9,6 +9,7 @@ namespace TranslateTool
 {
     public enum KeyModifier
     {
+        None = 0,
         Alt = 0x4001,
         Control = 0x4002,
         Shift = 0x4004,

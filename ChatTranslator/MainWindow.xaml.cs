@@ -23,7 +23,7 @@ namespace ChatTranslator
     /// </summary>
     public partial class MainWindow : Window
     {
-        public MainWindowLogic Logic;
+        public static MainWindowLogic Logic;
         public MainWindow()
         {
             InitializeComponent();
@@ -36,7 +36,15 @@ namespace ChatTranslator
 
             Logic = new MainWindowLogic();
             Logic.Load(windowInteropHelper.Handle, this, settingsWindow, MainGrid, OutputDock, InputDock, ClickThroughButton, AutoShowButton, AutoScrollButton, SettingsButton, CloseButton, AutoShowButtonBackground, AutoScrollButtonBackground, SettingsButtonBackground, CloseButtonBackground, MoveButton, MinimiseButton, MinimiseButtonBackground, Output, Input);
-            settingsWindow.ApplyTranslation(MainWindowLogic.Language);
+            settingsWindow.Verify();
+            
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+
+            Application.Current.Shutdown();
         }
 
         private void Style_Scroll(object sender, ScrollEventArgs e)

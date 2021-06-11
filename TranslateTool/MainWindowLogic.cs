@@ -21,6 +21,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Drawing.Imaging;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -166,10 +167,10 @@ namespace TranslateTool
                 });
                 this.timer = timer;
                 timer.Start();
-                //if(Settings.AutoScroll)
-                //{
+                if(MainWindowLogic.AutoScrollEnabled)
+                {
                     window.Output.ScrollToEnd();
-                //}
+                }
             });
         }
 
@@ -252,6 +253,7 @@ namespace TranslateTool
         public const string VersionNumber = "8.6.21";
         public const double WaitDelay = 1.5;
         public const double FadeTime = 0.5;
+        public const double ShineTime = 3;
         public const double ShowDelay = 0.2;
         public static Window Form;
         public static Language Language;
@@ -259,10 +261,6 @@ namespace TranslateTool
         public static System.Windows.Media.Color TextBackgroundColor = System.Windows.Media.Color.FromRgb(12, 29, 44);
         public static System.Windows.Media.Color TextColor = System.Windows.Media.Color.FromRgb(255, 255, 255);
 
-        [DllImport("user32.dll")]
-        public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vlc);
-        [DllImport("user32.dll")]
-        public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
         [DllImport("user32.dll", SetLastError = true)]
         public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
         [DllImport("user32.dll")]
@@ -327,9 +325,24 @@ namespace TranslateTool
         public byte HistoryCurrent = 0;
         public bool TranslatorLoaded = false;
         public bool WasColouredLine = false;
+        public static bool AutoScrollEnabled = true;
+        public double ShineOpacityModifierValue = 0;
 
         public MainWindowLogic()
         {
+        }
+
+        public double ShineOpacityModifier
+        {
+            get
+            {
+                return ShineOpacityModifierValue;
+            }
+            set
+            {
+                ShineOpacityModifierValue = value;
+                MainWindow.Resources["ShineOpacity"] = InterfaceOpacity * ShineOpacityModifierValue;
+            }
         }
 
         public double PartialOpacity
@@ -348,7 +361,7 @@ namespace TranslateTool
                 OutputDock.Background =
                     new SolidColorBrush(System.Windows.Media.Color.FromArgb(alphaOutputBackground, TextBackgroundColor.R, TextBackgroundColor.G, TextBackgroundColor.B));
                 MainWindow.Resources["ScrollOpacity"] = 0.2 + (value * 0.8);
-                MainWindow.Resources["ShineOpacity"] = value;
+                MainWindow.Resources["ShineOpacity"] = value * ShineOpacityModifierValue;
                 InputDock.Opacity = value;
                 ClickThroughButton.Opacity = value;
                 SettingsButton.Opacity = value;
@@ -359,6 +372,7 @@ namespace TranslateTool
                 partialOpacity = value;
             }
         }
+
 
         public double InterfaceOpacity
         {
@@ -408,20 +422,39 @@ namespace TranslateTool
             }
             if (Settings.ClickthroughKeyEnabled)
             {
-                RegisterHotKey(MainWindowHandle, 1, (int)Settings.ClickthroughKey.Value.Modifier, (int)Settings.ClickthroughKey.Value.Key);
+                Settings.ClickthroughKey.Value.Register(MainWindowHandle,1);
             }
             if (Settings.OCRKeyEnabled)
             {
-                RegisterHotKey(MainWindowHandle, 2, 2, (int)System.Windows.Forms.Keys.Y);
+                Settings.OCRKey.Value.Register(MainWindowHandle,2);
             }
             ((ScaleTransform)MainWindow.Resources["ShineScale"]).ScaleX = MainWindow.Width / DEFAULTWIDTH;
             ((ScaleTransform)MainWindow.Resources["ShineScale"]).ScaleY = MainWindow.Height / DEFAULTHEIGHT;
         }
+        public void EnhanceImageClarity(string input, string output)
+        {
+            System.Drawing.Image originalImage = System.Drawing.Image.FromFile(input);
+            System.Drawing.Image adjustedImage = new Bitmap(originalImage.Width, originalImage.Height);
+            var brightness = 1.2f;
+            var contrast = 1f; 
+            var gamma = 2f; 
+            var adjustedBrightness = brightness - 1.0f;
+            float[][] ptsArray ={new float[] {contrast, 0, 0, 0, 0}, new float[] {0, contrast, 0, 0, 0}, new float[] {0, 0, contrast, 0, 0}, new float[] {0, 0, 0, 1.0f, 0}, new float[] {adjustedBrightness, adjustedBrightness, adjustedBrightness, 0, 1}};
 
+            ImageAttributes imageAttributes = new ImageAttributes();
+            imageAttributes.ClearColorMatrix();
+            imageAttributes.SetColorMatrix(new ColorMatrix(ptsArray), ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+            imageAttributes.SetGamma(gamma, ColorAdjustType.Bitmap);
+            Graphics g = Graphics.FromImage(adjustedImage);
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+            g.DrawImage(originalImage, new Rectangle(0, 0, adjustedImage.Width, adjustedImage.Height)
+                , 0, 0, originalImage.Width, originalImage.Height,
+                GraphicsUnit.Pixel, imageAttributes);
+            adjustedImage.Save(output);
+        }
         public void TranslateRecentScreenshot()
         {
-            //var directory = new DirectoryInfo(Settings.OCRDirectory.Value);
-            var directory = new DirectoryInfo("C:\\Users\\azure\\Documents\\ShareX\\Screenshots\\2021-06");
+            var directory = new DirectoryInfo(Settings.OCRDirectory.Value);
             var mostRecentTime = new DateTime(0);
             FileInfo latestFile = null;
 
@@ -438,7 +471,7 @@ namespace TranslateTool
                 string result;
                 var process = new Process();
 
-                File.Copy(latestFile.FullName, "Tesseract-OCR\\input", true);
+                EnhanceImageClarity(latestFile.FullName, "Tesseract-OCR\\input");
                 process.StartInfo.WorkingDirectory = "Tesseract-OCR";
                 process.StartInfo.FileName = "Tesseract-OCR\\tesseract.exe";
                 process.StartInfo.Arguments = "input output -l jpn";
@@ -454,7 +487,7 @@ namespace TranslateTool
                 }
                 else
                 {
-
+                    WriteLine("Image recognition failed.");
                 }
                 process.Dispose();
                 File.Delete("Tesseract-OCR\\output.txt");
@@ -555,6 +588,7 @@ namespace TranslateTool
             Settings.OCRKey.OnChanged += OCRKeySettingChanged;
             Settings.OCRKeyEnabled.OnChanged += EnableOCRKeySettingChanged;
             Settings.Language.OnChanged += LanguageSettingChanged;
+            Settings.AutoShow.OnChanged += AutoShowSettingChanged;
             ConfigureMouseClickEvent(AutoShowButton, AutoShowButton_Click);
             ConfigureMouseClickEvent(AutoScrollButton, AutoScrollButton_Click);
             ConfigureMouseClickEvent(SettingsButton, SettingsButton_Click);
@@ -633,7 +667,7 @@ namespace TranslateTool
             {
                 if (e.NewValue)
                 {
-                    RegisterHotKey(MainWindowHandle, 1, (int)Settings.ClickthroughKey.Value.Modifier, (int)Settings.ClickthroughKey.Value.Key);
+                    Settings.ClickthroughKey.Value.Register(MainWindowHandle,2);
                 }
                 else
                 {
@@ -641,7 +675,7 @@ namespace TranslateTool
                     {
                         ToggleClickThrough(MainWindowHandle);
                     }
-                    UnregisterHotKey(MainWindowHandle, 1);
+                    Settings.ClickthroughKey.Value.Unregister(MainWindowHandle,2);
                 }
             }
         }
@@ -652,8 +686,8 @@ namespace TranslateTool
             {
                 if (Settings.ClickthroughKeyEnabled)
                 {
-                    UnregisterHotKey(MainWindowHandle, 1);
-                    RegisterHotKey(MainWindowHandle, 1, (int)e.NewValue.Modifier, (int)e.NewValue.Key);
+                    e.OldValue.Unregister(MainWindowHandle, 1);
+                    e.NewValue.Register(MainWindowHandle, 1);
                 }
             }
         }
@@ -664,11 +698,11 @@ namespace TranslateTool
             {
                 if (e.NewValue)
                 {
-                    RegisterHotKey(MainWindowHandle, 2, (int)Settings.OCRKey.Value.Modifier, (int)Settings.OCRKey.Value.Key);
+                    Settings.OCRKey.Value.Register(MainWindowHandle,2);
                 }
                 else
                 {
-                    UnregisterHotKey(MainWindowHandle, 2);
+                    Settings.OCRKey.Value.Unregister(MainWindowHandle, 2);
                 }
             }
         }
@@ -679,8 +713,8 @@ namespace TranslateTool
             {
                 if (Settings.OCRKeyEnabled)
                 {
-                    UnregisterHotKey(MainWindowHandle, 2);
-                    RegisterHotKey(MainWindowHandle, 2, (int)e.NewValue.Modifier, (int)e.NewValue.Key);
+                    e.OldValue.Unregister(MainWindowHandle, 1);
+                    e.NewValue.Register(MainWindowHandle, 1);
                 }
             }
         }
@@ -761,7 +795,7 @@ namespace TranslateTool
 
         public void AutoShowSettingChanged(object sender, SettingChangedEventArgs<bool> e)
         {
-            if (!e.NewValue)
+            if (e.NewValue)
             {
                 AutoShowButton.Background = ImageResources.AutoShow;
             }
@@ -771,7 +805,7 @@ namespace TranslateTool
             }
         }
 
-        /*public void ToggleAutoScroll()
+        public void ToggleAutoScroll()
         {
             if (!AutoScrollEnabled)
             {
@@ -783,7 +817,7 @@ namespace TranslateTool
                 AutoScrollEnabled = false;
                 AutoScrollButton.Background = ImageResources.AutoScrollDisabled;
             }
-        }*/
+        }
 
         public void UpdateTextSpan(string text, TextRange textRange, System.Windows.Media.Color color)
         {
@@ -793,10 +827,10 @@ namespace TranslateTool
                 textRange.Text = $"{text}";
                 textRange.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(color));
 
-                //if (AutoScrollEnabled)
-                //{
+                if (AutoScrollEnabled)
+                {
                     Output.ScrollToEnd();
-                //}
+                }
 
             });
 
@@ -826,10 +860,10 @@ namespace TranslateTool
                 textRange.Text = $"{text}\r\n";
                 textRange.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(color));
 
-                //if (AutoScrollEnabled)
-                //{
+                if (AutoScrollEnabled)
+                {
                     Output.ScrollToEnd();
-                //}
+                }
 
             });
 
@@ -859,13 +893,13 @@ namespace TranslateTool
             Action action = () =>
             {
                 Language = language;
-                WriteLine(language.Text["Help"]);
-                WriteLine(language.Text["Introduction"]);
-                ClickThroughButton.ToolTip = language.Text["ClickthoughButtonToolTip"];
-                AutoScrollButton.ToolTip = language.Text["AutoScrollButtonToolTip"];
-                AutoShowButton.ToolTip = language.Text["AutoShowButtonToolTip"];
-                CloseButton.ToolTip = language.Text["CloseButtonToolTip"];
-                MainWindow.Title = language.Text["WindowTitle"];
+                WriteLine(language["Help"]);
+                WriteLine(language["Introduction"]);
+                ClickThroughButton.ToolTip = language["ClickthoughButtonToolTip"];
+                AutoScrollButton.ToolTip = language["AutoScrollButtonToolTip"];
+                AutoShowButton.ToolTip = language["AutoShowButtonToolTip"];
+                CloseButton.ToolTip = language["CloseButtonToolTip"];
+                MainWindow.Title = language["WindowTitle"];
 
                 if (language.Current != UserLanguage.English)
                 {
@@ -913,6 +947,22 @@ namespace TranslateTool
             bounds.Width += 12;
             bounds.Height += 12;
 
+            if (Translate.IsNGS && ShineOpacityModifier < 1)
+            {
+                ShineOpacityModifier = e.Add(ShineOpacityModifier, ShineTime);
+            }
+            else if (!Translate.IsNGS && ShineOpacityModifier > 0)
+            {
+                ShineOpacityModifier = e.Subtract(ShineOpacityModifier, ShineTime);
+            }
+            if (ShineOpacityModifier > 1)
+            {
+                ShineOpacityModifier = 1;
+            }
+            else if (ShineOpacityModifier < 0)
+            {
+                ShineOpacityModifier = 0;
+            }
             if (bounds.Contains(cursorPosition))
             {
                 TargetOpacity = 1;
@@ -1053,6 +1103,8 @@ namespace TranslateTool
             SettingsWindow.Close();
             timer.Stop();
             Translate.Stop();
+            CefSharp.Cef.Shutdown();
+            SettingHandler.Close();
         }
 
         private void AutoScrollHighlight()
@@ -1117,7 +1169,7 @@ namespace TranslateTool
 
         private void AutoScrollButton_Click(object sender, MouseEventArgs e)
         {
-            //ToggleAutoScroll();
+            ToggleAutoScroll();
             AutoScrollHighlight();
         }
 
@@ -1195,7 +1247,7 @@ namespace TranslateTool
             SettingsWindow.Show();
         }
 
-        private void Input_PreviewKeyDown(object sender, KeyEventArgs e)
+        private void Input_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Up)
             {
@@ -1213,9 +1265,9 @@ namespace TranslateTool
             }
         }
 
-        private void Input_KeyDown(object sender, KeyEventArgs e)
+        private void Input_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == Key.Enter && !Keyboard.IsKeyDown(Key.LeftShift) && !Keyboard.IsKeyDown(Key.RightShift))
+            if (e.Key == Key.Enter && !System.Windows.Input.Keyboard.IsKeyDown(Key.LeftShift) && !System.Windows.Input.Keyboard.IsKeyDown(Key.RightShift))
             {
                 TranslateInput();
             }

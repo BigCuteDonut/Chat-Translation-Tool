@@ -87,20 +87,35 @@ namespace TranslateTool
             return result;
         }
         public readonly UserLanguage Current;
-        public Dictionary<string, string> Text;
+        private Dictionary<string, string> text;
 
         public Language(string version)
         {
             Current = Settings.Language.Value;
-            Text = Language.ReadLanguageConfig(Path.GetFullPath(Path.Combine(Settings.LanguageFileDirectory,$"{Settings.Language.Value}.txt")));
+            text = Language.ReadLanguageConfig(Path.GetFullPath(Path.Combine(Settings.LanguageFileDirectory,$"{Settings.Language.Value}.txt")));
 
             if (Settings.Language.Value == UserLanguage.English)
             {
-                Text["Introduction"] = $"Please contact @CuteDonut3 on Twitter or BreadButterfly in-game(PSO2) to report bugs/issues. \n\nVersion {version}.";
+                text["Introduction"] = $"Please contact @CuteDonut3 on Twitter or BreadButterfly in-game(PSO2) to report bugs/issues. \n\nVersion {version}.";
             }
             else if (Settings.Language.Value == UserLanguage.Japanese)
             {
-                Text["Introduction"] = $"バグや問題点の報告は、Twitterの@CuteDonut3か、PSO2のBreadButterflyまでご連絡ください。このプログラムを開発している人は日本語を書くのが苦手なのでご注意ください。また、言語の修正を報告していただいても構いません。\n\nVer. {version}.";
+                text["Introduction"] = $"バグや問題点の報告は、Twitterの@CuteDonut3か、PSO2のBreadButterflyまでご連絡ください。このプログラムを開発している人は日本語を書くのが苦手なのでご注意ください。また、言語の修正を報告していただいても構いません。\n\nVer. {version}.";
+            }
+        }
+
+        public string this[string key]
+        {
+            get
+            {
+                if(text.TryGetValue(key, out var value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return $"{key}(Error)";
+                }
             }
         }
 

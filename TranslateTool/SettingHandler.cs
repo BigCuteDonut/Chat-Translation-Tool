@@ -157,6 +157,12 @@ namespace TranslateTool
             Load();
         }
 
+        public static void Close()
+        {
+            pointerFile.Dispose();
+            settingFile.Dispose();
+        }
+
         private static void Load()
         {
             int count;

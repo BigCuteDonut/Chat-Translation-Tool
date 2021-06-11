@@ -236,7 +236,7 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
         <sys:Double x:Key="ScrollOpacity">1</sys:Double>
-        <sys:Double x:Key="ShineOpacity">1</sys:Double>
+        <sys:Double x:Key="ShineOpacity">0</sys:Double>
         <ScaleTransform x:Key="ShineScale" ScaleX="1" ScaleY="1"/>
         <SolidColorBrush x:Key="BaseColour" Color="#FF132648"></SolidColorBrush>
         <SolidColorBrush x:Key="HighlightColour" Color="#FF244464"></SolidColorBrush>

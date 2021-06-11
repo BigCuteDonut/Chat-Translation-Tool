@@ -66,6 +66,7 @@ namespace TranslateTool
         private static readonly System.Windows.Media.Color messageColour = System.Windows.Media.Color.FromRgb(230, 230, 230);
         public static Language Language;
         public static string Input;
+        public static bool IsNGS = true;
 
         public class PhraseInfo
         {
@@ -106,12 +107,13 @@ namespace TranslateTool
             var directory = new DirectoryInfo(Path.Combine(documentsPath, @"SEGA\PHANTASYSTARONLINE2\log"));
             try
             {
+                IsNGS = false;
                 FileInfo latestFile = null;
                 DateTime mostRecentTime = new DateTime(0);
 
                 foreach (var file in directory.GetFiles("ChatLog*.txt"))
                 {
-                    if (file.CreationTime > mostRecentTime)
+                    if (file.LastWriteTime > mostRecentTime)
                     {
                         mostRecentTime = file.CreationTime;
                         latestFile = file;
@@ -121,10 +123,11 @@ namespace TranslateTool
 
                 foreach (var file in directory.GetFiles("ChatLog*.txt"))
                 {
-                    if (file.CreationTime > mostRecentTime)
+                    if (file.LastWriteTime > mostRecentTime)
                     {
                         mostRecentTime = file.CreationTime;
                         latestFile = file;
+                        IsNGS = true;
                     }
                 }
 
@@ -141,7 +144,15 @@ namespace TranslateTool
                             file = null;
                         }
                         file = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                        mainWindow.WriteLine(Language.Text["PSO2ChatlogFound"]);
+
+                        if (!IsNGS)
+                        {
+                            mainWindow.WriteLine(Language["PSO2ChatlogFound"]);
+                        }
+                        else
+                        {
+                            mainWindow.WriteLine(Language["NGSChatlogFound"]);
+                        }
                         file.Position = lastFileLength;
 
                         result = true;
@@ -154,7 +165,7 @@ namespace TranslateTool
             }
             return result;
         }
-
+        //switch from daily basis to minutely.
         public static void Start(MainWindowLogic mainWindow)
         {
             var browsers = new Browser[instanceCount];
@@ -172,7 +183,9 @@ namespace TranslateTool
             }
             thread = new Thread(new ThreadStart(_CloseWatch));
             browserThread = new Thread(new ThreadStart(BrowserThread));
+            thread.IsBackground = true;
             thread.Start();
+            browserThread.IsBackground = true;
             browserThread.Start();
         }
 
@@ -284,7 +297,7 @@ namespace TranslateTool
 
         private static void CommandHELP(string[] args)
         {
-            mainWindow.WriteLine(Language.Text["Help"]);
+            mainWindow.WriteLine(Language["Help"]);
             mainWindow.SetInputValue("");
         }
 
@@ -343,7 +356,7 @@ namespace TranslateTool
 
                         if (result != null)
                         {
-                            mainWindow.WriteLine(string.Format(Language.Text["CommandNotFound"], result));
+                            mainWindow.WriteLine(string.Format(Language["CommandNotFound"], result));
                         }
                     }
                 }
@@ -438,6 +451,14 @@ namespace TranslateTool
                     HandleBrowserPackage(package);
                 }
                 Thread.Sleep(50);
+            }
+            SleepUntil(() => { return translateFromBrowsers.Count == instanceCount; });
+            SleepUntil(() => { return !translateToDLBusy; });
+            translateToDLBrowser.Dispose();
+
+            foreach(var browser in translateFromBrowsers)
+            {
+                browser.Dispose();
             }
         }
 
@@ -674,7 +695,7 @@ namespace TranslateTool
             var action = new Action(() => System.Windows.Clipboard.SetText(text));
 
             mainWindow.Invoke(action);
-            package.DelayHandler.Resolve(string.Format(Language.Text["SuccessfulInputTranslation"], text));
+            package.DelayHandler.Resolve(string.Format(Language["SuccessfulInputTranslation"], text));
             package.Clear();
         }
 
@@ -752,7 +773,7 @@ namespace TranslateTool
             }
             if (alternative == null)
             {
-                mainWindow.WriteLine(Language.Text["NoMoreSuggestions"]);
+                mainWindow.WriteLine(Language["NoMoreSuggestions"]);
             }
             else
             {
