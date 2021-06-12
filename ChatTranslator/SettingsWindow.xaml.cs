@@ -84,10 +84,21 @@ namespace ChatTranslator
             if (language.Current != UserLanguage.English)
             {
                 ShowAdditionalInfoCheck.IsEnabled = false;
+                OCRKeyEnabledCheck.IsEnabled = false;
+
+                if (Settings.AdditionalInfo)
+                {
+                    Settings.AdditionalInfo.Value = false;
+                }
+                if (Settings.OCRKeyEnabled)
+                {
+                    Settings.OCRKeyEnabled.Value = false;
+                }
             }
             else
             {
                 ShowAdditionalInfoCheck.IsEnabled = true;
+                OCRKeyEnabledCheck.IsEnabled = true;
             }
         }
 
@@ -114,7 +125,8 @@ namespace ChatTranslator
                 BindCheckBoxSetting(ColourChatMessagesCheck, Settings.ColourChat);
                 BindCheckBoxSetting(ClickthroughKeyEnabledCheck, Settings.ClickthroughKeyEnabled);
                 BindCheckBoxSetting(OCRKeyEnabledCheck, Settings.OCRKeyEnabled);
-                BindRadioSetting(new RadioButton[] { LanguageSelectEnglish, LanguageSelectJapanese }, new UserLanguage[] { UserLanguage.English, UserLanguage.Japanese }, Settings.Language);
+                LanguageSelectEnglish.Checked += (s, eventArgs) => { Settings.ChangeLanguage(UserLanguage.English); };
+                LanguageSelectJapanese.Checked += (s, eventArgs) => { Settings.ChangeLanguage(UserLanguage.Japanese); };
                 BindHotkeySelect(ClickthroughHotkeyInput, "ClickthroughHotkeyInput", Settings.ClickthroughKey);
                 BindHotkeySelect(OCRHotkeyInput, "OCRHotkeyInput", Settings.OCRKey);
                 OCRDirectoryInput.Content = (string)Settings.OCRDirectory.Value;
@@ -146,7 +158,7 @@ namespace ChatTranslator
                 }
                 Settings.OCRKeyEnabled.OnChanged += OCRKeyEnabledSettingChanged;
                 Settings.ClickthroughKeyEnabled.OnChanged += ClickthroughKeyEnabledSettingChanged;
-                Settings.Language.OnChanged += LanguageSettingChanged;
+                Settings.OnLanguageChanged += LanguageSettingChanged;
                 windowConfigured = true;
             }
             windowLoaded = true;
@@ -162,7 +174,7 @@ namespace ChatTranslator
             OCRHotkeyInput.IsEnabled = e.NewValue;
         }
 
-        private void LanguageSettingChanged(object sender, SettingChangedEventArgs<UserLanguage> e)
+        public void LanguageSettingChanged(object sender, SettingChangedEventArgs<UserLanguage> e)
         {
             if (e.NewValue != e.OldValue)
             {

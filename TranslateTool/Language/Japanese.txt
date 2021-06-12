@@ -1,36 +1,52 @@
-0: 移動する;;
-1: 翻訳する;;
-2: チャットログが見つかりました;;
-3: 「{0}」というコマンドはありません;;
-4: 翻訳：
- {0};;
-5: エラー:要求に時間がかかりすぎました;;
-6: エラー:翻訳に失敗しました;;
-7: 「{0}」に翻訳されたメッセー;;
-8: 助け:
+`This is a file comment and won't be parsed.`
+`To use certain reserved characters, put \ before them like so: \`  \;  \\ `
+`Format: key = value;`
+`Whitespace after = is ignored until non whitespace is encountered.`
+`{<digit>} will be replaced at runtime.`
+TranslationAuthor = @CuteDonut3; `Author of this language file.`
+PSO2ChatlogFound = PSO2のチャットログが見つかりました;
+NGSChatlogFound = NGSのチャットログが見つかりました;
+CommandNotFound = 「{0}」というコマンドはありません; `{0} = command name`
+TranslationTimedOut = エラー:要求に時間がかかりすぎました;
+TranslationUnknownError = エラー:翻訳に失敗しました;
+SuccessfulInputTranslation = 「{0}」に翻訳されたメッセー; `{0} = translated message`
+Help = 助け:
 「アウトプット」: 翻訳されたチャットメッセージと翻訳されていないチャットメッセージ、その他のシステム情報が含まれています。
 「インプット」: ここにメッセージを入力することができ、{Input}の中でキーボードのEnter↵キーを押すことで有効になります。メッセージが"/"で始まる場合、それはコマンドとして取られ、そうでない場合は翻訳され、結果は自動的にコピーされます。
 
 コマンド:
 「/from」 <メッセージ>」: <メッセージ>は英語から日本語に翻訳されます
-「/en」: プログラムを英語のユーザー モードに切り替えます
 「/help」: このコマンドは助け情報を表示します
-;;
-9: このコマンドはまだ実装されていません;;
-10: ;;
-11: ;;
-12: クリックスルーモードの状態を示します。Ctrl+Tキーで切り替えます;;
-13: 自動スクロール;;
-14: 自動的に現れる;;
-15: 閉じる;;
-16: 日本語インターフェースには適用されません;;
-17: ウィンドウの透明化を防止します;;
-18: 機械翻訳者には、これ以上の翻訳の提案はありません;;
-19: 部分透過を有効にします;;
-20: Partial transparency minimum.;;
-21: チャットメッセージに色を付けます;;
-22: クリックスルートグルを無効にする;;
-23: English;;
-24: 日本語;;
-25: ユーザーの言語:;;
-26: チャットトランスレータ;;
+;
+CommandNotImplemented = このコマンドはまだ実装されていません;
+Introduction = Hardcoded;
+ClickthoughButtonToolTip = クリックスルーモードの状態を示します。Ctrl+Tキーで切り替えます;
+AutoScrollButtonToolTip = 自動スクロール;
+AutoShowButtonToolTip = 自動的に現れる;
+CloseButtonToolTip = 閉じる;
+AdditionalInfoCheckbox = 日本語インターフェースには適用されません;
+AutoHideCheckbox = ウィンドウの透過性を有効にする;
+NoMoreSuggestions = 機械翻訳者には、これ以上の翻訳の提案はありません;
+PartialTransparencyCheckbox = 部分透過を有効にします;
+ColourChatMessagesCheckbox = チャットメッセージに色を付けます;
+ClickthroughKeyEnabledCheckbox = クリックスルートグルを無効にする;
+English = English; `Do not translate`
+Japanese = 日本語; `Do not translate`
+Russian = русский; `Do not translate`
+French = français; `Do not translate`
+German = Deutsch; `Do not translate`
+LanguageSelect = ユーザーの言語:;
+WindowTitle = チャットトランスレータ;
+TranslateAnyLanguageCheckbox = 任意の言語を翻訳する;
+CreditMessage = {0}によるUI翻訳; `{0} = TranslationAuthor`
+ClickthroughHotkeyInput = クリックスルーのホットキー：{0}; `{0} = Hotkey`
+OCRKeyEnabledCheckbox = 日本語インターフェースには適用されません;
+OCRHotkeyInput = 日本語インターフェースには適用されません; `{0} = Hotkey`
+OCRNotice = 日本語インターフェースには適用されません;
+GeneralTab = 一般;
+OCRTab = OCR;
+LanguageTab = 言語;
+UpdateAvailable: There is a new update available, would you like to download it?;
+EnableUpdateCheck: Enable automatic update checks.
+EnableAutoUpdate: Enable automatic updates.
+UpdateNotice: Updated to version {0}; `{0} = version`

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
@@ -37,6 +38,9 @@ namespace TranslateTool
                 return UserLanguage.English;
             }
         }
+
+        public static event EventHandler<SettingChangedEventArgs<UserLanguage>> OnLanguageChanged;
+        public static Language Language;
         public static Setting<bool> FirstTimeStartup = SettingHandler.LoadSetting("FirstTimeStartup", true);
         public static Setting<bool> PartialTransparency = SettingHandler.LoadSetting("PartialOpacityEnabled", true);
         public static Setting<bool> Clickthrough = SettingHandler.LoadSetting("ClickthroughEnabled", false);
@@ -49,9 +53,19 @@ namespace TranslateTool
         public static Setting<Vector2> WindowPosition = SettingHandler.LoadSetting("WindowPosition", new Vector2(355,400));
         public static Setting<bool> ColourChat = SettingHandler.LoadSetting("ColourChat", true);
         public static Setting<bool> AdditionalInfo = SettingHandler.LoadSetting("AdditionalInfo", false);
-        public static Setting<UserLanguage> Language = SettingHandler.LoadSetting("UserLanguage", GetDefaultLanguage());
+        private static Setting<UserLanguage> language = SettingHandler.LoadSetting("UserLanguage", GetDefaultLanguage());
         public static Setting<bool> AutoShow = SettingHandler.LoadSetting("AutoShow", false);
         public static Setting<bool> AutoHide = SettingHandler.LoadSetting("AutoHide", true);
+
+        static Settings()
+        {
+            Language = new Language(MainWindowLogic.VersionNumber, language);
+        }
+        public static void ChangeLanguage(UserLanguage newLanguage)
+        {
+            OnLanguageChanged?.Invoke(language, new SettingChangedEventArgs<UserLanguage>(language.Value, newLanguage));
+            language.Value = newLanguage;
+        }
 
     }
 }

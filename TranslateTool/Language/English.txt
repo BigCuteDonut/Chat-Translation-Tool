@@ -1,6 +1,6 @@
 ﻿`This is a file comment and won't be parsed.`
 `To use certain reserved characters, put \ before them like so: \`  \;  \\ `
-`Format: key = value`
+`Format: key = value;`
 `Whitespace after = is ignored until non whitespace is encountered.`
 `{<digit>} will be replaced at runtime.`
 TranslationAuthor = @CuteDonut3; `Author of this language file.`
@@ -53,3 +53,7 @@ OCRNotice = How to use:
 GeneralTab = General;
 OCRTab = Image Recognition;
 LanguageTab = Language;
+UpdateAvailable: There is a new update available, would you like to download it?;
+EnableUpdateCheck: Enable automatic update checks.
+EnableAutoUpdate: Enable automatic updates.
+UpdateNotice: Updated to version {0}; `{0} = version`

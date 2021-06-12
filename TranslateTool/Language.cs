@@ -89,16 +89,16 @@ namespace TranslateTool
         public readonly UserLanguage Current;
         private Dictionary<string, string> text;
 
-        public Language(string version)
+        public Language(string version, UserLanguage language)
         {
-            Current = Settings.Language.Value;
-            text = Language.ReadLanguageConfig(Path.GetFullPath(Path.Combine(Settings.LanguageFileDirectory,$"{Settings.Language.Value}.txt")));
+            Current = language;
+            text = Language.ReadLanguageConfig(Path.GetFullPath(Path.Combine(Settings.LanguageFileDirectory,$"{language}.txt")));
 
-            if (Settings.Language.Value == UserLanguage.English)
+            if (language == UserLanguage.English)
             {
                 text["Introduction"] = $"Please contact @CuteDonut3 on Twitter or BreadButterfly in-game(PSO2) to report bugs/issues. \n\nVersion {version}.";
             }
-            else if (Settings.Language.Value == UserLanguage.Japanese)
+            else if (language == UserLanguage.Japanese)
             {
                 text["Introduction"] = $"バグや問題点の報告は、Twitterの@CuteDonut3か、PSO2のBreadButterflyまでご連絡ください。このプログラムを開発している人は日本語を書くのが苦手なのでご注意ください。また、言語の修正を報告していただいても構いません。\n\nVer. {version}.";
             }

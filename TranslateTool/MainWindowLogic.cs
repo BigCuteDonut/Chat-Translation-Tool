@@ -250,7 +250,7 @@ namespace TranslateTool
     {
         public const int DEFAULTWIDTH = 355;
         public const int DEFAULTHEIGHT = 400;
-        public const string VersionNumber = "8.6.21";
+        public const string VersionNumber = "12.6.21";
         public const double WaitDelay = 1.5;
         public const double FadeTime = 0.5;
         public const double ShineTime = 3;
@@ -562,7 +562,7 @@ namespace TranslateTool
             DisableCloseHighlight();
             DisableMinimiseHighlight();
             ApplySettings();
-            ApplyTranslation(new Language(VersionNumber));
+            ApplyTranslation(Settings.Language);
             MainWindow.Closing += WindowClosing;
             MainWindow.Closed += WindowClosed;
             MainWindow.SizeChanged += MainWindow_SizeChanged;
@@ -587,7 +587,7 @@ namespace TranslateTool
             Settings.ClickthroughKey.OnChanged += ClickthroughKeySettingChanged;
             Settings.OCRKey.OnChanged += OCRKeySettingChanged;
             Settings.OCRKeyEnabled.OnChanged += EnableOCRKeySettingChanged;
-            Settings.Language.OnChanged += LanguageSettingChanged;
+            Settings.OnLanguageChanged += LanguageSettingChanged;
             Settings.AutoShow.OnChanged += AutoShowSettingChanged;
             ConfigureMouseClickEvent(AutoShowButton, AutoShowButton_Click);
             ConfigureMouseClickEvent(AutoScrollButton, AutoScrollButton_Click);
@@ -606,7 +606,7 @@ namespace TranslateTool
         {
             if (e.NewValue != e.OldValue)
             {
-                var language = new Language(MainWindowLogic.VersionNumber);
+                var language = new Language(VersionNumber,e.NewValue);
 
                 Translate.Language = language;
                 ApplyTranslation(language);
@@ -667,7 +667,7 @@ namespace TranslateTool
             {
                 if (e.NewValue)
                 {
-                    Settings.ClickthroughKey.Value.Register(MainWindowHandle,2);
+                    Settings.ClickthroughKey.Value.Register(MainWindowHandle,1);
                 }
                 else
                 {
@@ -675,7 +675,7 @@ namespace TranslateTool
                     {
                         ToggleClickThrough(MainWindowHandle);
                     }
-                    Settings.ClickthroughKey.Value.Unregister(MainWindowHandle,2);
+                    Settings.ClickthroughKey.Value.Unregister(MainWindowHandle,1);
                 }
             }
         }
