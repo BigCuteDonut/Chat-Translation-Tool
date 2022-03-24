@@ -24,6 +24,7 @@ namespace TranslateTool
     public class Settings
     {
         public const string LanguageFileDirectory = "../Language";
+        public const string JSFileDirectory = "../JS";
 
         public static UserLanguage GetDefaultLanguage()
         {
@@ -46,9 +47,9 @@ namespace TranslateTool
         public static Setting<bool> Clickthrough = SettingHandler.LoadSetting("ClickthroughEnabled", false);
         public static Setting<bool> ClickthroughKeyEnabled= SettingHandler.LoadSetting("ClickthroughKeyEnabled", false);
         public static Setting<Hotkey> ClickthroughKey= SettingHandler.LoadSetting("ClickthroughKey", new Hotkey(KeyModifier.Control,WinKey.T));
-        public static Setting<bool> OCRKeyEnabled = SettingHandler.LoadSetting("OCRKeyEnabled", true);
+        public static Setting<bool> OCRKeyEnabled = SettingHandler.LoadSetting("OCRKeyEnabled", false);
         public static Setting<Hotkey> OCRKey = SettingHandler.LoadSetting("OCRKey", new Hotkey(KeyModifier.Control, WinKey.G));
-        public static Setting<FixedString> OCRDirectory = SettingHandler.LoadSetting<FixedString>("OCRDirectory", default);
+        public static Setting<FixedString> OCRDirectory = SettingHandler.LoadSetting<FixedString>("OCRDirectory", "Click to set directory.");
         public static Setting<Vector2> WindowSize = SettingHandler.LoadSetting("WindowSize", new Vector2(355,400));
         public static Setting<Vector2> WindowPosition = SettingHandler.LoadSetting("WindowPosition", new Vector2(355,400));
         public static Setting<bool> ColourChat = SettingHandler.LoadSetting("ColourChat", true);

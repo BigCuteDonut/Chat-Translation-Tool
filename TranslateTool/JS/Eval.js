@@ -1,0 +1,1 @@
+﻿document.querySelector("#panelTranslateText > div:nth-of-type(3) > section:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > textarea").value

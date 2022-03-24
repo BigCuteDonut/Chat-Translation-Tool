@@ -39,7 +39,9 @@ namespace TranslateTool
     }
     public static class Translate
     {
-        private static string DLEval = "document.querySelector(\"#dl_translator > div.lmt__text > div.lmt__sides_container > div.lmt__side_container.lmt__side_container--target > div.lmt__textarea_container > div.lmt__inner_textarea_container > textarea\").value";
+        private static bool AutoFindAttempted = false;
+        private static string DLEval;
+        private static string AutoFind;
         private static string fileName;
         private static FileStream file;
         private static long lastFileLength;
@@ -77,6 +79,8 @@ namespace TranslateTool
 
         static Translate()
         {
+            DLEval = File.ReadAllText(Path.GetFullPath(Path.Combine(Settings.JSFileDirectory, $"Eval.js")));
+            AutoFind = File.ReadAllText(Path.GetFullPath(Path.Combine(Settings.JSFileDirectory, $"AutoFind.js")));
             commandRegex = new Regex("/(?:(?:a|p|t)|(?:(?:cmf|camouflage) \\S+)|(?:(?:la|cla|mla|fla) \\S+)|(?:ce\\d)|(?:ceall)|(?:ceall (?:(?:on)|(?:off)))|(?:ci\\d \\d)|(?:ci\\d+)|(?:face\\d (?:(?:on)|(?:off)))|(?:face\\d)|(?:fc\\d (?:(?:on)|(?:off)))|(?:fc\\d)|(?:mn\\d+)|(?:mpal\\d)|(?:moya)|(?:spal\\d+)|(?:toge)|(?:symbol\\d+)|(?:vo\\d+)|(?:mf\\d+)|(?:sr\\d+))");
             data = new Data();
             fileName = "";
@@ -490,6 +494,23 @@ namespace TranslateTool
 
         }
 
+        private static async Task<string> FindNewEval(Browser browser, string url, string text)
+        {
+            var newEval = await TranslateAny(browser, url, AutoFind, "バナナ");
+
+            if (newEval != "fail")
+            {
+                DLEval = $"document.querySelector(\"{newEval}\").value";
+                mainWindow.WriteLine($"New selector: {newEval}");
+                File.WriteAllText(Path.GetFullPath(Path.Combine(Settings.JSFileDirectory, $"Eval.js")), DLEval);
+                return await TranslateAny(browser, url, DLEval, text);
+            }
+            else
+            {
+                return text;
+            }
+        }
+
         private static async Task<string> TranslateAny(Browser browser, string url, string eval, string text)
         {
             if (text == "")
@@ -517,7 +538,15 @@ namespace TranslateTool
 
                             if (timeout <= 0)
                             {
-                                taskCompletion.SetResult(text);
+                                if (!AutoFindAttempted)
+                                {
+                                    AutoFindAttempted = true;
+                                    taskCompletion.SetResult(FindNewEval(browser, url, text).GetAwaiter().GetResult());
+                                }
+                                else
+                                {
+                                    taskCompletion.SetResult(text);
+                                }
                                 break;
                             }
                         }
@@ -532,7 +561,15 @@ namespace TranslateTool
 
                                 if (timeout <= 0)
                                 {
-                                    taskCompletion.SetResult(result);
+                                    if (!AutoFindAttempted)
+                                    {
+                                        AutoFindAttempted = true;
+                                        taskCompletion.SetResult(FindNewEval(browser, url, text).GetAwaiter().GetResult());
+                                    }
+                                    else
+                                    {
+                                        taskCompletion.SetResult(text);
+                                    }
                                     break;
                                 }
                             }

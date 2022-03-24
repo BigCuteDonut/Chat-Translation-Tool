@@ -250,7 +250,7 @@ namespace TranslateTool
     {
         public const int DEFAULTWIDTH = 355;
         public const int DEFAULTHEIGHT = 400;
-        public const string VersionNumber = "12.6.21";
+        public const string VersionNumber = "24.03.22";
         public const double WaitDelay = 1.5;
         public const double FadeTime = 0.5;
         public const double ShineTime = 3;
@@ -454,43 +454,50 @@ namespace TranslateTool
         }
         public void TranslateRecentScreenshot()
         {
-            var directory = new DirectoryInfo(Settings.OCRDirectory.Value);
-            var mostRecentTime = new DateTime(0);
-            FileInfo latestFile = null;
-
-            foreach (var file in directory.GetFiles())
+            try
             {
-                if (file.CreationTime > mostRecentTime)
+                var directory = new DirectoryInfo(Settings.OCRDirectory.Value);
+                var mostRecentTime = new DateTime(0);
+                FileInfo latestFile = null;
+
+                foreach (var file in directory.GetFiles())
                 {
-                    mostRecentTime = file.CreationTime;
-                    latestFile = file;
+                    if (file.CreationTime > mostRecentTime)
+                    {
+                        mostRecentTime = file.CreationTime;
+                        latestFile = file;
+                    }
+                }
+                if (latestFile != null)
+                {
+                    string result;
+                    var process = new Process();
+
+                    EnhanceImageClarity(latestFile.FullName, "Tesseract-OCR\\input");
+                    process.StartInfo.WorkingDirectory = "Tesseract-OCR";
+                    process.StartInfo.FileName = "Tesseract-OCR\\tesseract.exe";
+                    process.StartInfo.Arguments = "input output -l jpn";
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.Start();
+                    Console.WriteLine(process.StandardOutput.ReadToEnd());
+                    result = File.ReadAllText("Tesseract-OCR\\output.txt").Trim();
+                    if (result.Length > 0)
+                    {
+                        Translate.TranslateChat("OCR", result, TextColor);
+                    }
+                    else
+                    {
+                        WriteLine("Image recognition failed.");
+                    }
+                    process.Dispose();
+                    File.Delete("Tesseract-OCR\\output.txt");
                 }
             }
-            if (latestFile != null)
+            catch
             {
-                string result;
-                var process = new Process();
 
-                EnhanceImageClarity(latestFile.FullName, "Tesseract-OCR\\input");
-                process.StartInfo.WorkingDirectory = "Tesseract-OCR";
-                process.StartInfo.FileName = "Tesseract-OCR\\tesseract.exe";
-                process.StartInfo.Arguments = "input output -l jpn";
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-                process.Start();
-                Console.WriteLine(process.StandardOutput.ReadToEnd());
-                result = File.ReadAllText("Tesseract-OCR\\output.txt").Trim();
-                if (result.Length > 0)
-                {
-                    Translate.TranslateChat("OCR", result, TextColor);
-                }
-                else
-                {
-                    WriteLine("Image recognition failed.");
-                }
-                process.Dispose();
-                File.Delete("Tesseract-OCR\\output.txt");
             }
         }
 

@@ -114,6 +114,14 @@ namespace ChatTranslator
         {
             if (MainWindowLogic.Language != null && !windowConfigured)
             {
+                if (Settings.Language.Current == UserLanguage.English)
+                {
+                    LanguageSelectEnglish.IsChecked = true;
+                }
+                else if (Settings.Language.Current == UserLanguage.Japanese)
+                {
+                    LanguageSelectJapanese.IsChecked = true;
+                }
                 SettingsWindow.Keyboard = new TranslateTool.Keyboard(HwndSource.FromVisual(this) as HwndSource);
                 ApplyTranslation(MainWindowLogic.Language);
                 CloseButton.Background = ImageResources.Close;
