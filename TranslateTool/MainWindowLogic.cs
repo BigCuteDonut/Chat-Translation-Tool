@@ -250,7 +250,7 @@ namespace TranslateTool
     {
         public const int DEFAULTWIDTH = 355;
         public const int DEFAULTHEIGHT = 400;
-        public const string VersionNumber = "24.03.22";
+        public const string VersionNumber = "23.02.10";
         public const double WaitDelay = 1.5;
         public const double FadeTime = 0.5;
         public const double ShineTime = 3;

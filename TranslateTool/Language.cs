@@ -96,11 +96,11 @@ namespace TranslateTool
 
             if (language == UserLanguage.English)
             {
-                text["Introduction"] = $"Please contact @CuteDonut3 on Twitter or BreadButterfly in-game(PSO2) to report bugs/issues. \n\nVersion {version}.";
+                text["Introduction"] = $"Please contact @Miaiaiaia_ on Twitter or open an issue on github at https://github.com/BigCuteDonut/Chat-Translation-Tool/issues to report bugs/issues. \n\nVersion {version}.";
             }
             else if (language == UserLanguage.Japanese)
             {
-                text["Introduction"] = $"バグや問題点の報告は、Twitterの@CuteDonut3か、PSO2のBreadButterflyまでご連絡ください。このプログラムを開発している人は日本語を書くのが苦手なのでご注意ください。また、言語の修正を報告していただいても構いません。\n\nVer. {version}.";
+                text["Introduction"] = $"バグや問題点の報告は、Twitterの@Miaiaiaia_か、PSO2のBreadButterflyまでご連絡ください。このプログラムを開発している人は日本語を書くのが苦手なのでご注意ください。また、言語の修正を報告していただいても構いません。\n\nVer. {version}.";
             }
         }
 

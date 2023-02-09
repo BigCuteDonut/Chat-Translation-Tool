@@ -1,6 +1,6 @@
 ﻿/*
     Chat Translation Tool
-    Copyright (C) 2020 Johanna Sierak
+    Copyright (C) 2022 Johanna Sierak
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published

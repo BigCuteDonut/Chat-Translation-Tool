@@ -1,27 +1,22 @@
-function getSelector(node)
-{
+function getSelector(node) {
     var id = node.getAttribute('id');
 
-    if (id)
-    {
+    if (id) {
         return '#' + id;
     }
 
     var path = '';
 
-    while (node)
-    {
+    while (node) {
         var name = node.localName;
         var parent = node.parentNode;
 
-        if (!parent)
-        {
+        if (!parent) {
             path = name + ' > ' + path;
             continue;
         }
 
-        if (node.getAttribute('id'))
-        {
+        if (node.getAttribute('id')) {
             path = '#' + node.getAttribute('id') + ' > ' + path;
             break;
         }
@@ -30,26 +25,21 @@ function getSelector(node)
         var children = parent.childNodes;
         children = Array.prototype.slice.call(children);
 
-        children.forEach(function (child)
-        {
-            if (child.localName == name)
-            {
+        children.forEach(function (child) {
+            if (child.localName == name) {
                 sameTagSiblings.push(child);
             }
         });
 
         // if there are more than one children of that type use nth-of-type
 
-        if (sameTagSiblings.length > 1)
-        {
+        if (sameTagSiblings.length > 1) {
             var index = sameTagSiblings.indexOf(node);
             name += ':nth-of-type(' + (index + 1) + ')';
         }
-        if (path)
-        {
+        if (path) {
             path = name + ' > ' + path;
-        } else
-        {
+        } else {
             path = name;
         }
 
@@ -58,15 +48,12 @@ function getSelector(node)
 
     return path;
 }
-function getTextAreaByValue(value)
-{
-    var textareas = document.getElementsByTagName("textarea");
+function getTextAreaByValue(value) {
+    var textareas = document.getElementsByTagName("d-textarea");
     var result = null;
 
-    for (var x = 0; x < textareas.length; x++)
-    {
-        if (textareas[x].value == value)
-        {
+    for (var x = 0; x < textareas.length; x++) {
+        if (textareas[x].value == value) {
             result = textareas[x];
 
             break;
@@ -77,12 +64,10 @@ function getTextAreaByValue(value)
 var textarea = getTextAreaByValue("banana")
 var selector;
 
-if (textarea == null)
-{
+if (textarea == null) {
     selector = "";
 }
-else
-{
+else {
     selector = getSelector(textarea);
 }
 selector
