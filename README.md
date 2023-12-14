@@ -1,3 +1,5 @@
+# This project is discontinued. 
+## While the interface with PSO2 NGS will likely last for as long as the game, the web based translator needs constant maintenence.
 # Chat Translation Tool
 A tool for translating chat messages between English and Japanese in PSO2. Supports Japanese to English, or English to Japanese, and the interface is available in both languages.
 
